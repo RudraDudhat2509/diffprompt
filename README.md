@@ -203,6 +203,10 @@ pytest tests/ -v
 ```
 
 ---
+## Documentation
+- [API Reference](API_REFERENCE.md)
+- [Cookbook](COOKBOOK.md)
+- [Contributing](CONTRIBUTING.md)
 
 ## License
 
