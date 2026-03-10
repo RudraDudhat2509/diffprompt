@@ -18,10 +18,11 @@ from diffprompt.core.clusterer import cluster_diffs
 from diffprompt.core.slicer import compute_slices
 from diffprompt.core.scorer import regression_score, select_key_examples
 from diffprompt.models import DiffResult, Verdict
-
+from diffprompt.core.embedder import get_embedder
+get_embedder()  # load once here, cached for all subsequent calls
 
 PROMPT_V1 = "You are a helpful assistant. Answer clearly and completely."
-PROMPT_V2 = "You are a concise assistant. Be brief."
+PROMPT_V2 = "You are a helpful assistant. Answer clearly, completely, and always give a concrete example."
 
 
 async def main():

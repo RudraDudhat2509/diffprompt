@@ -47,7 +47,7 @@ async def call_groq(model: str, prompt: str, system: Optional[str] = None) -> Op
             r = await client.post(
                 f"{GROQ_BASE}/chat/completions",
                 headers={"Authorization": f"Bearer {api_key}"},
-                json={"model": model, "messages": messages, "max_tokens": 1000}
+                json={"model": model, "messages": messages, "max_tokens": 2000}
             )
             r.raise_for_status()
             return r.json()["choices"][0]["message"]["content"]

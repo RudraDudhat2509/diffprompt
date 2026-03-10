@@ -58,23 +58,33 @@ async def generate_test_cases(
 
     for category, fraction in DISTRIBUTION.items():
         count = max(2, round(n * fraction))
-        raw, _ = await call_cascade(
-            TAXONOMY_PROMPTS[category].format(n=count, prompt=prompt),
-            local_only=local_only,
-        )
-        clean = re.sub(r"```(?:json)?|```", "", raw).strip()
-        inputs = json.loads(clean)
-
-        for inp in inputs[:count]:
-            tags = ontology.tag(inp) if ontology else {}
+        
+        # Try up to 2 times if JSON parsing fails
+        inputs = None
+        for attempt in range(2):
+            raw, _ = await call_cascade(
+                TAXONOMY_PROMPTS[category].format(n=count, prompt=prompt),
+                local_only=local_only,
+            )
+            clean = re.sub(r"```(?:json)?|```", "", raw).strip()
+            # Extract just the JSON array if there's surrounding text
+            match = re.search(r'\[.*\]', clean, re.DOTALL)
+            if match:
+                clean = match.group(0)
+            try:
+                inputs = json.loads(clean)
+                break
+            except json.JSONDecodeError:
+                if attempt == 1:
+                    inputs = []  # give up, skip this bucket
+    
+        for inp in (inputs or [])[:count]:  # In case LLM returns more than requested
             test_cases.append(TestCase(
-                id=str(uuid.uuid4())[:8],
+                id=str(uuid.uuid4()),
                 input=inp,
                 category=category,
-                tags=tags,
             ))
-
-    return test_cases
+        return test_cases
 
 
 def diversity_score(test_cases: list[TestCase], embedder) -> float:

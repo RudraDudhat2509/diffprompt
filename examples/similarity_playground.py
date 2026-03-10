@@ -1,7 +1,7 @@
 """
 Similarity playground — understand how semantic similarity works.
 
-No LLM required. Runs entirely locally.
+No LLM required. Runs entirely locally. Built for Privacy
 
 Run with:
   python examples/similarity_playground.py

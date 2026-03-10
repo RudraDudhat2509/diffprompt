@@ -17,27 +17,30 @@ import numpy as np
 from diffprompt.models.cascade import call_cascade
 
 
-INFER_PROMPT = """You are analyzing a prompt to determine what input dimensions matter for testing it.
+INFER_PROMPT = """You are designing a test suite for an LLM prompt.
 
 Prompt: {prompt}
 
-Identify 3-5 dimensions along which inputs to this prompt could meaningfully vary.
-For each dimension, provide 3-5 discrete values.
+Identify 3-4 dimensions that would reveal BEHAVIORAL differences in how this prompt responds.
+Focus on: user intent, emotional state, topic complexity, and request type.
+Avoid surface-level dimensions like length, format, or punctuation style.
 
 Return ONLY valid JSON. Example:
 {{
   "tone": ["formal", "casual", "emotional", "urgent"],
-  "complexity": ["simple", "multi-part", "open-ended"],
-  "intent": ["lookup", "reasoning", "generation"]
+  "complexity": ["simple", "multi-part", "ambiguous"],
+  "intent": ["lookup", "reasoning", "emotional-support"]
 }}
 
-Base dimensions entirely on what THIS prompt handles."""
+Each dimension must predict a meaningfully different response from this specific prompt."""
 
 
-ANCHOR_PROMPT = """For the tag "{tag}" in dimension "{dimension}", write one short example sentence
-that perfectly represents this tag in the context of this prompt: {prompt}
+ANCHOR_PROMPT = """For the tag "{tag}" in dimension "{dimension}", write 3 short example sentences
+that real users would send to this prompt: {prompt}
 
-Return just the sentence, nothing else. No quotes, no explanation."""
+Each sentence must clearly represent "{tag}" and be distinct from each other.
+Return ONLY a JSON array of 3 strings. No explanation."""
+
 
 
 class Ontology:
@@ -64,34 +67,50 @@ class Ontology:
         self.dimensions = json.loads(clean)
 
     async def build_anchors(self, prompt: str, local_only: bool = False) -> None:
-        """Generate anchor sentences for each tag. One LLM call per tag."""
+        """Generate 3 anchor sentences per tag. One LLM call per tag."""
         for dimension, tags in self.dimensions.items():
             self.anchors[dimension] = {}
             for tag in tags:
-                anchor, _ = await call_cascade(
+                raw, _ = await call_cascade(
                     ANCHOR_PROMPT.format(tag=tag, dimension=dimension, prompt=prompt),
                     local_only=local_only
                 )
-                self.anchors[dimension][tag] = anchor.strip()
-
-        # Pre-compute anchor embeddings per dimension
+                clean = re.sub(r"```(?:json)?|```", "", raw).strip()
+                try:
+                    sentences = json.loads(clean)
+                    if isinstance(sentences, list):
+                        self.anchors[dimension][tag] = sentences
+                    else:
+                        self.anchors[dimension][tag] = [sentences]
+                except Exception:
+                    self.anchors[dimension][tag] = [raw.strip()]
         for dimension, tag_anchors in self.anchors.items():
-            sentences = list(tag_anchors.values())
-            self.anchor_embeddings[dimension] = self.embedder.encode(sentences)
+            self.anchor_embeddings[dimension] = {}
+            for tag, sentences in tag_anchors.items():
+                self.anchor_embeddings[dimension][tag] = self.embedder.encode(sentences)
+
 
     def tag(self, input_text: str) -> dict[str, str]:
         """
-        Tag an input using embedding similarity to anchors.
+        Tag an input using max similarity across multiple anchors per tag.
         No LLM call — pure embeddings. Deterministic and fast.
         """
         input_emb = self.embedder.encode([input_text])
         result = {}
 
         for dimension, tags in self.dimensions.items():
-            anchor_embs = self.anchor_embeddings[dimension]
-            sims = cosine_similarity(input_emb, anchor_embs)[0]
-            best_idx = int(np.argmax(sims))
-            result[dimension] = tags[best_idx]
+            best_tag = None
+            best_score = -1.0
+
+            for tag in tags:
+                anchor_embs = self.anchor_embeddings[dimension][tag]
+                sims = cosine_similarity(input_emb, anchor_embs)[0]
+                score = float(np.max(sims))  # best match across all anchors for this tag
+                if score > best_score:
+                    best_score = score
+                    best_tag = tag
+
+            result[dimension] = best_tag
 
         return result
 
@@ -105,6 +124,7 @@ class Ontology:
         o.anchors = data["anchors"]
         # Rebuild anchor embeddings
         for dimension, tag_anchors in o.anchors.items():
-            sentences = list(tag_anchors.values())
-            o.anchor_embeddings[dimension] = o.embedder.encode(sentences)
+            o.anchor_embeddings[dimension] = {}
+            for tag, sentences in tag_anchors.items():
+                o.anchor_embeddings[dimension][tag] = o.embedder.encode(sentences)
         return o

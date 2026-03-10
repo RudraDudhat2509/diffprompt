@@ -43,7 +43,7 @@ async def main():
         "I've been feeling really anxious lately",
         "Explain recursion like I'm five years old",
         "WHAT IS 2+2???",
-        "Write a python function that sorts a list",
+        "Write a python function that sorts a list"
     ]
 
     for inp in test_inputs:
