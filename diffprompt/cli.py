@@ -87,6 +87,7 @@ def diff(
 
 
 async def _run_diff(**kwargs):
+    #only need to import core modules here to avoid circular imports with cli
     from diffprompt.core.ontology   import Ontology
     from diffprompt.core.generator  import generate_test_cases, diversity_score
     from diffprompt.core.runner     import run_both
