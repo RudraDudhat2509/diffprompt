@@ -58,46 +58,66 @@ async def generate_test_cases(
 
     for category, fraction in DISTRIBUTION.items():
         count = max(2, round(n * fraction))
-        
-        # Try up to 2 times if JSON parsing fails
-        inputs = None
-        for attempt in range(2):
-            raw, _ = await call_cascade(
-                TAXONOMY_PROMPTS[category].format(n=count, prompt=prompt),
-                local_only=local_only,
-            )
-            clean = re.sub(r"```(?:json)?|```", "", raw).strip()
-            # Extract just the JSON array if there's surrounding text
-            match = re.search(r'\[.*\]', clean, re.DOTALL)
-            if match:
-                clean = match.group(0)
-            try:
-                inputs = json.loads(clean)
-                break
-            except json.JSONDecodeError:
-                if attempt == 1:
-                    inputs = []  # give up, skip this bucket
-    
-        for inp in (inputs or [])[:count]:  # In case LLM returns more than requested
+
+        inputs = await _generate_bucket(prompt, category, count, local_only)
+
+        for inp in inputs[:count]:
             test_cases.append(TestCase(
                 id=str(uuid.uuid4()),
                 input=inp,
                 category=category,
             ))
-        return test_cases
+
+    # BUG FIX: return was previously inside the for loop,
+    # causing only the first bucket (typical) to ever be generated.
+    return test_cases
 
 
-def diversity_score(test_cases: list[TestCase], embedder) -> float:
+async def _generate_bucket(
+    prompt: str,
+    category: TestCategory,
+    count: int,
+    local_only: bool,
+) -> list[str]:
+    """Generate one bucket of test cases with up to 2 retries on parse failure."""
+    for attempt in range(2):
+        raw, _ = await call_cascade(
+            TAXONOMY_PROMPTS[category].format(n=count, prompt=prompt),
+            local_only=local_only,
+        )
+        clean = re.sub(r"```(?:json)?|```", "", raw).strip()
+        match = re.search(r'\[.*\]', clean, re.DOTALL)
+        if match:
+            clean = match.group(0)
+        try:
+            parsed = json.loads(clean)
+            if isinstance(parsed, list):
+                return [str(x) for x in parsed if x]
+        except json.JSONDecodeError:
+            if attempt == 1:
+                return []  # give up after 2 attempts
+
+    return []
+
+
+def diversity_score(test_cases: list[TestCase]) -> float:
     """
     Compute diversity score for the test suite.
     1 - mean pairwise similarity. Higher = more diverse.
+    Uses the shared embedder from diffprompt.core.embedder to avoid
+    loading a second model instance.
     """
+    from diffprompt.core.embedder import embed
     from sklearn.metrics.pairwise import cosine_similarity
     import numpy as np
 
+    if len(test_cases) < 2:
+        return 1.0
+
     inputs = [tc.input for tc in test_cases]
-    embs = embedder.encode(inputs)
+    embs = embed(inputs)
     sim_matrix = cosine_similarity(embs)
     np.fill_diagonal(sim_matrix, 0)
-    mean_sim = sim_matrix.sum() / (len(inputs) * (len(inputs) - 1))
+    n = len(inputs)
+    mean_sim = sim_matrix.sum() / (n * (n - 1))
     return float(1 - mean_sim)
