@@ -6,144 +6,192 @@
 <title>diffprompt report</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'JetBrains Mono', 'Fira Code', monospace; background: #0f172a; color: #e2e8f0; padding: 2rem; line-height: 1.6; }
-  h1 { font-size: 1.4rem; color: #f8fafc; margin-bottom: 0.25rem; }
-  h2 { font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.1em; margin: 2rem 0 0.75rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.4rem; }
-  .meta { color: #475569; font-size: 0.8rem; margin-bottom: 2rem; }
-  .score-block { display: flex; align-items: center; gap: 1rem; margin: 1rem 0; }
-  .score { font-size: 2.5rem; font-weight: bold; color: #ef4444; }
-  .bar-wrap { flex: 1; background: #1e293b; border-radius: 4px; height: 8px; }
-  .bar-fill { height: 8px; border-radius: 4px; background: #ef4444; width: 18.2%; }
-  .counts { display: flex; gap: 1.5rem; font-size: 0.85rem; margin-top: 0.5rem; }
-  .improved { color: #22c55e; } .regressed { color: #ef4444; } .neutral { color: #94a3b8; }
-  .slice-row { display: flex; align-items: center; gap: 1rem; padding: 0.4rem 0; font-size: 0.85rem; border-bottom: 1px solid #1e293b; }
-  .slice-label { width: 220px; color: #cbd5e1; }
-  .slice-bar-wrap { flex: 1; background: #1e293b; border-radius: 2px; height: 6px; }
-  .example { background: #1e293b; border-radius: 8px; padding: 1rem; margin: 0.75rem 0; border-left: 3px solid #334155; }
-  .example-label { font-size: 0.75rem; text-transform: uppercase; color: #64748b; margin-bottom: 0.5rem; }
-  .example-row { font-size: 0.82rem; margin: 0.3rem 0; }
-  .example-row .key { color: #64748b; display: inline-block; width: 3rem; }
-  .verdict-block { background: #1e293b; border-radius: 8px; padding: 1.25rem; margin-top: 1rem; border-left: 4px solid #ef4444; }
-  .verdict-label { font-size: 1.2rem; font-weight: bold; color: #ef4444; }
-  .verdict-rec { color: #94a3b8; font-size: 0.85rem; margin-top: 0.5rem; }
-  .cluster { display: inline-block; background: #1e293b; border: 1px solid #334155; border-radius: 4px; padding: 0.25rem 0.6rem; margin: 0.25rem; font-size: 0.8rem; color: #94a3b8; }
-  .prompt-box { background: #1e293b; border-radius: 6px; padding: 0.75rem; font-size: 0.82rem; color: #cbd5e1; white-space: pre-wrap; word-break: break-word; max-height: 120px; overflow: auto; }
+  body { font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace; background: #0f172a; color: #e2e8f0; padding: 2rem; line-height: 1.6; max-width: 960px; margin: 0 auto; }
+  h1 { font-size: 1.4rem; color: #f8fafc; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+  h2 { font-size: 0.75rem; color: #475569; text-transform: uppercase; letter-spacing: 0.12em; margin: 2rem 0 0.75rem; border-bottom: 1px solid #1e293b; padding-bottom: 0.4rem; }
+  .meta { color: #475569; font-size: 0.78rem; margin-bottom: 2rem; }
+  .meta span { margin-right: 1.5rem; }
+  .score-block { display: flex; align-items: center; gap: 1.5rem; margin: 1rem 0; }
+  .score { font-size: 2.8rem; font-weight: 700; color: #ef4444; letter-spacing: -0.03em; line-height: 1; }
+  .score sup { font-size: 1rem; color: #475569; font-weight: 400; }
+  .bar-wrap { flex: 1; background: #1e293b; border-radius: 4px; height: 6px; }
+  .bar-fill { height: 6px; border-radius: 4px; background: #ef4444; width: 15.4%; transition: width 0.3s; }
+  .counts { display: flex; gap: 1.5rem; font-size: 0.82rem; margin-top: 0.6rem; }
+  .improved { color: #22c55e; } .regressed { color: #ef4444; } .neutral { color: #475569; }
+  .slice-table { width: 100%; border-collapse: collapse; }
+  .slice-table td { padding: 0.35rem 0; font-size: 0.82rem; vertical-align: middle; }
+  .slice-label { width: 200px; padding-right: 1rem; }
+  .slice-bar-cell { width: 200px; }
+  .slice-bar-wrap { background: #1e293b; border-radius: 2px; height: 5px; }
+  .slice-score { width: 3rem; text-align: right; padding: 0 0.75rem; font-variant-numeric: tabular-nums; }
+  .slice-n { color: #334155; font-size: 0.75rem; }
+  .example { background: #0d1829; border: 1px solid #1e293b; border-radius: 8px; padding: 1.1rem 1.25rem; margin: 0.75rem 0; }
+  .example + .example { margin-top: 0.5rem; }
+  .example-slot { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.1em; color: #334155; margin-bottom: 0.6rem; }
+  .example-tags { font-size: 0.75rem; color: #475569; margin-bottom: 0.6rem; }
+  .example-tags .tag-key { color: #334155; }
+  .example-tags .tag-val { color: #64748b; }
+  .example-row { display: grid; grid-template-columns: 3rem 1fr; gap: 0.5rem; font-size: 0.82rem; margin: 0.25rem 0; align-items: baseline; }
+  .row-key { color: #334155; font-size: 0.75rem; }
+  .row-v1 { color: #64748b; }
+  .row-why { color: #475569; font-style: italic; font-size: 0.8rem; }
+  .divider { border: none; border-top: 1px solid #1e293b; margin: 2rem 0; }
+  .verdict-block { border-radius: 8px; padding: 1.25rem 1.5rem; margin-top: 1rem; border-left: 3px solid #ef4444; background: #0d1829; }
+  .verdict-label { font-size: 1.1rem; font-weight: 700; color: #ef4444; letter-spacing: 0.04em; }
+  .verdict-rec { color: #64748b; font-size: 0.82rem; margin-top: 0.5rem; line-height: 1.6; }
+  .cluster-wrap { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.25rem; }
+  .cluster { background: #1e293b; border: 1px solid #2d3f55; border-radius: 4px; padding: 0.2rem 0.65rem; font-size: 0.78rem; color: #64748b; }
+  .prompt-box { background: #0d1829; border: 1px solid #1e293b; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.8rem; color: #94a3b8; white-space: pre-wrap; word-break: break-word; max-height: 100px; overflow: auto; }
+  .prompt-label { font-size: 0.72rem; color: #334155; text-transform: uppercase; letter-spacing: 0.08em; margin: 0.75rem 0 0.3rem; }
 </style>
 </head>
 <body>
+
 <h1>diffprompt</h1>
-<div class="meta">model: groq/llama-3.3-70b-versatile &nbsp;|&nbsp; judge: local/qwen2.5:7b &nbsp;|&nbsp; tests: 20 &nbsp;|&nbsp; diversity: 0.78</div>
+<div class="meta">
+  <span>model: groq/llama-3.3-70b-versatile</span>
+  <span>judge: local/qwen2.5:7b</span>
+  <span>tests: 20</span>
+  <span>diversity: 0.81</span>
+</div>
 
 <h2>Prompts</h2>
-<p style="font-size:0.8rem;color:#64748b;margin-bottom:0.3rem">v1 (baseline)</p>
-<div class="prompt-box">﻿You are a customer support agent. Be helpful, empathetic, and thorough</div>
-<p style="font-size:0.8rem;color:#64748b;margin:0.5rem 0 0.3rem">v2 (candidate)</p>
-<div class="prompt-box">﻿You are a customer support agent. Be concise and solution-focused. Skip pleasantries</div>
+<div class="prompt-label">v1 — baseline</div>
+<div class="prompt-box">You are a customer support agent. Be helpful, empathetic, and thorough</div>
+<div class="prompt-label">v2 — candidate</div>
+<div class="prompt-box">You are a customer support agent. Be concise and solution-focused. Skip pleasantries</div>
 
 <h2>Summary</h2>
 <div class="score-block">
-  <div class="score">18.2<span style="font-size:1rem;color:#64748b">/100</span></div>
+  <div class="score">15.4<sup>/100</sup></div>
   <div style="flex:1">
     <div class="bar-wrap"><div class="bar-fill"></div></div>
     <div class="counts">
-      <span class="improved">▲ 4 improved</span>
-      <span class="regressed">▼ 16 regressed</span>
+      <span class="improved">▲ 5 improved</span>
+      <span class="regressed">▼ 15 regressed</span>
       <span class="neutral">→ 0 neutral</span>
     </div>
   </div>
 </div>
 
-<h2>Behavioral Profile</h2>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#22c55e">user_intent:informational</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#22c55e;width:59%"></div></div>
-      <span style="color:#22c55e;font-size:0.8rem;width:3rem;text-align:right">0.60</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">2 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">user_intent:navigational</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:62%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.62</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">2 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">request_type:specific_solutions</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:65%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.66</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">11 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">emotional_state:frustrated</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:66%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.67</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">5 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">emotional_state:confused</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:68%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.68</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">4 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">topic_complexity:technical_issue</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:69%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.69</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">8 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">topic_complexity:return_policy</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:69%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.69</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">11 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">user_intent:emotional_support</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:69%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.69</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">6 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">request_type:troubleshooting</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:69%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.69</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">6 tests</span>
-    </div>
-    <div class="slice-row">
-      <span class="slice-label" style="color:#ef4444">user_intent:transactional</span>
-      <div class="slice-bar-wrap"><div style="height:6px;border-radius:2px;background:#ef4444;width:70%"></div></div>
-      <span style="color:#ef4444;font-size:0.8rem;width:3rem;text-align:right">0.70</span>
-      <span style="color:#475569;font-size:0.75rem;width:4rem;text-align:right">10 tests</span>
-    </div>
+<h2>Behavioral Profile</h2><table class='slice-table'><tr><td colspan="4" style="padding-top:0.5rem;font-size:0.75rem;color:#22c55e;padding-bottom:0.2rem">v2 performs well when…</td></tr><tr>
+      <td class="slice-label" style="color:#22c55e">emotional_state:neutral</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#22c55e;width:76%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#22c55e">0.71</td>
+      <td class="slice-n">4 tests</td>
+    </tr><tr>
+      <td class="slice-label" style="color:#22c55e">request_type:troubleshooting</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#22c55e;width:90%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#22c55e">0.75</td>
+      <td class="slice-n">3 tests</td>
+    </tr><tr>
+      <td class="slice-label" style="color:#22c55e">user_intent:complaint</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#22c55e;width:95%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#22c55e">0.77</td>
+      <td class="slice-n">4 tests</td>
+    </tr><tr><td colspan="4" style="padding-top:0.75rem;font-size:0.75rem;color:#ef4444;padding-bottom:0.2rem">v2 struggles when…</td></tr><tr>
+      <td class="slice-label" style="color:#ef4444">emotional_state:appreciative</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#ef4444;width:15%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#ef4444">0.53</td>
+      <td class="slice-n">2 tests<span style="color:#f59e0b;font-size:0.72rem"> ⚠ low n</span></td>
+    </tr><tr>
+      <td class="slice-label" style="color:#ef4444">topic_complexity:general_inquiry</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#ef4444;width:23%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#ef4444">0.55</td>
+      <td class="slice-n">3 tests<span style="color:#f59e0b;font-size:0.72rem"> ⚠ no typical tests</span></td>
+    </tr><tr>
+      <td class="slice-label" style="color:#ef4444">request_type:status_update</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#ef4444;width:33%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#ef4444">0.58</td>
+      <td class="slice-n">5 tests</td>
+    </tr><tr>
+      <td class="slice-label" style="color:#ef4444">user_intent:informational</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#ef4444;width:50%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#ef4444">0.63</td>
+      <td class="slice-n">5 tests</td>
+    </tr><tr>
+      <td class="slice-label" style="color:#ef4444">request_type:explanation</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#ef4444;width:51%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#ef4444">0.64</td>
+      <td class="slice-n">2 tests<span style="color:#f59e0b;font-size:0.72rem"> ⚠ low n</span></td>
+    </tr><tr>
+      <td class="slice-label" style="color:#ef4444">emotional_state:confused</td>
+      <td class="slice-bar-cell">
+        <div class="slice-bar-wrap">
+          <div style="height:5px;border-radius:2px;background:#ef4444;width:65%"></div>
+        </div>
+      </td>
+      <td class="slice-score" style="color:#ef4444">0.68</td>
+      <td class="slice-n">5 tests</td>
+    </tr></table>
 <h2>Key Examples</h2>
-  <div class="example" style="border-left-color:#ef4444">
-    <div class="example-label">Most Important &nbsp;·&nbsp; user_intent:transactional  emotional_state:appreciative  topic_complexity:simple_product_query  request_type:specific_solutions &nbsp;·&nbsp; divergence 0.52</div>
-    <div class="example-row"><span class="key">input</span>hello</div>
-    <div class="example-row"><span class="key">v1</span>Hello. Welcome to our customer support. My name is Alex, and I'll be happy to help you with any questions or concerns you may have. How can I assist you today? Is there a specific issue or product you</div>
-    <div class="example-row" style="color:#ef4444"><span class="key">v2</span>What's the issue you're experiencing?</div>
-    <div class="example-row"><span class="key">why</span><em style="color:#94a3b8">The change from V1 to V2 reveals that the updated model has lost its ability to generate a friendly and welcoming introduction, instead defaulting to a more direct and abrupt question, suggesting a shift in the model's prioritization of efficiency over customer service etiquette.</em></div>
-  </div>
-  <div class="example" style="border-left-color:#22c55e">
-    <div class="example-label">Best Improvement &nbsp;·&nbsp; user_intent:emotional_support  emotional_state:frustrated  topic_complexity:technical_issue  request_type:troubleshooting &nbsp;·&nbsp; divergence 0.53</div>
-    <div class="example-row"><span class="key">input</span>My internet has been down for 3 days and I've tried everything, I've restarted my router, checked all the cables, and ev</div>
-    <div class="example-row"><span class="key">v1</span>I'm so sorry to hear that you're experiencing internet issues and that it's been affecting your work and school. I can imagine how frustrating it must be for you, especially since you've tried trouble</div>
-    <div class="example-row" style="color:#22c55e"><span class="key">v2</span>I've located your account and I'm going to escalate this issue. Since you've already tried troubleshooting, I'm going to schedule a technician to visit your location. Can you please confirm your addre</div>
-    <div class="example-row"><span class="key">why</span><em style="color:#94a3b8">This reveals that the prompt change from V1 to V2 allowed the system to behave more efficiently and directly, escalating the issue and scheduling a technician visit, likely due to the removal of apologetic and empathetic language, which enabled the system to focus on the technical aspects of the issue and provide a more concise and practical solution.</em></div>
-  </div>
-  <div class="example" style="border-left-color:#ef4444">
-    <div class="example-label">Most Surprising &nbsp;·&nbsp; user_intent:informational  emotional_state:neutral  topic_complexity:return_policy  request_type:specific_solutions &nbsp;·&nbsp; divergence 0.57</div>
-    <div class="example-row"><span class="key">input</span>I ordered a pair of shoes online and they don't fit, what's the return policy?</div>
-    <div class="example-row"><span class="key">v1</span>I'm so sorry to hear that the shoes don't fit. I'd be happy to help you with the return process. 
+<div class="example" style="border-left: 3px solid #ef4444">
+  <div class="example-slot">Most Important</div>
+  <div class="example-tags"><span class="tag-key">user_intent:</span><span class="tag-val">informational</span>  <span class="tag-key">emotional_state:</span><span class="tag-val">appreciative</span>  <span class="tag-key">topic_complexity:</span><span class="tag-val">general_inquiry</span>  <span class="tag-key">request_type:</span><span class="tag-val">status_update</span> &nbsp;·&nbsp; divergence <span style="color:#ef4444">0.70</span></div>
+  <div class="example-row"><span class="row-key">input</span><span>HELLO</span></div>
+  <div class="example-row"><span class="row-key">v1</span><span class="row-v1">Hello. I'm so glad you reached out to us. My name is Alex, and I'll be happy to assist you with any questions or concerns you may have. How can I help you today? Is there something specific you'd like to know or an issue</span></div>
+  <div class="example-row"><span class="row-key">v2</span><span style="color:#ef4444">What's the issue you're experiencing?</span></div>
+  <div class="example-row"><span class="row-key">why</span><span class="row-why">This reveals that the prompt change caused a regression because the revised model (V2) lost the ability to generate a friendly and introductory response, instead opting for a more direct and abrupt query, indicating a shift in the model's understanding of the input or its response generation mechanism.</span></div>
+</div>
+<div class="example" style="border-left: 3px solid #22c55e">
+  <div class="example-slot">Best Improvement</div>
+  <div class="example-tags"><span class="tag-key">user_intent:</span><span class="tag-val">complaint</span>  <span class="tag-key">emotional_state:</span><span class="tag-val">frustrated</span>  <span class="tag-key">topic_complexity:</span><span class="tag-val">technical_issue</span>  <span class="tag-key">request_type:</span><span class="tag-val">troubleshooting</span> &nbsp;·&nbsp; divergence <span style="color:#22c55e">0.30</span></div>
+  <div class="example-row"><span class="row-key">input</span><span>I've been having this issue with my laptop for months now and I've tried everything to fix it, from restarting it to reinstalling the operat</span></div>
+  <div class="example-row"><span class="row-key">v1</span><span class="row-v1">I'm so sorry to hear that you've been dealing with this frustrating issue for months. It can be really challenging to troubleshoot a problem that's been persistent, especially when you've already tried a variety of troub</span></div>
+  <div class="example-row"><span class="row-key">v2</span><span style="color:#22c55e">To troubleshoot the issue, I'll need more information. Can you please provide the following details: 
 
-Our return policy allows for returns or exchanges within 30 days of delivery. If you'd like to initia</div>
-    <div class="example-row" style="color:#ef4444"><span class="key">v2</span>Our return policy allows for returns within 30 days of delivery. You can initiate a return by logging into your account, selecting the order, and clicking &quot;return&quot;. You'll receive a return shipping la</div>
-    <div class="example-row"><span class="key">why</span><em style="color:#94a3b8">This reveals that the prompt change led to a regression in the model's behavior, likely due to a shift from a more customer-centric and detailed response generation mechanism in V1 to a more concise and automated one in V2, which prioritizes brevity over providing thorough and helpful information.</em></div>
-  </div>
-<h2>Failure Mode Clusters</h2><div><span class="cluster">CONTEXT_LOSS (5)</span><span class="cluster">BREVITY_LOSS (3)</span><span class="cluster">BREVITY_GAIN (3)</span><span class="cluster">TONE_SHIFT (3)</span><span class="cluster">CONTEXT_LOSS (2)</span><span class="cluster">CONTEXT_LOSS (2)</span><span class="cluster">BREVITY_LOSS (2)</span></div>
+1. Laptop model
+2. The new software you installed before the issue started
+3. A detailed description of the problem y</span></div>
+  <div class="example-row"><span class="row-key">why</span><span class="row-why">The change from V1 to V2 reveals that the new mechanism is more direct and to-the-point, prioritizing the efficient collection of specific information necessary for troubleshooting over empathetic and exploratory conversation, indicating a shift towards a more structured and pragmatic approach.</span></div>
+</div>
+<div class="example" style="border-left: 3px solid #ef4444">
+  <div class="example-slot">Most Surprising</div>
+  <div class="example-tags"><span class="tag-key">user_intent:</span><span class="tag-val">informational</span>  <span class="tag-key">emotional_state:</span><span class="tag-val">neutral</span>  <span class="tag-key">topic_complexity:</span><span class="tag-val">general_inquiry</span>  <span class="tag-key">request_type:</span><span class="tag-val">explanation</span> &nbsp;·&nbsp; divergence <span style="color:#ef4444">0.40</span></div>
+  <div class="example-row"><span class="row-key">input</span><span>cat</span></div>
+  <div class="example-row"><span class="row-key">v1</span><span class="row-v1">It seems like you might be thinking about cats. Are you a cat owner or just a cat lover? Is there something specific you'd like to know about cats, such as their behavior, health, or care? I'm here to help with any quest</span></div>
+  <div class="example-row"><span class="row-key">v2</span><span style="color:#ef4444">Is there an issue with your cat or do you need information on cat care?</span></div>
+  <div class="example-row"><span class="row-key">why</span><span class="row-why">This reveals that the prompt change caused a regression in the model's ability to generate engaging and open-ended outputs, likely due to V2 being optimized for more direct and concise responses, resulting in a loss of conversational tone and helpfulness in its output.</span></div>
+</div>
+<h2>Failure Mode Clusters</h2><div class='cluster-wrap'><span class="cluster">CONTEXT_LOSS <span style="color:#475569">(11)</span></span><span class="cluster">BREVITY_GAIN <span style="color:#475569">(3)</span></span><span class="cluster">TONE_SHIFT <span style="color:#475569">(2)</span></span><span class="cluster">BREVITY_LOSS <span style="color:#475569">(2)</span></span></div>
 
 <h2>Verdict</h2>
 <div class="verdict-block">
   <div class="verdict-label">DO NOT SHIP</div>
-  <div class="verdict-rec">Safe to ship v2 for user_intent:informational, request_type:account_management. Keep v1 for user_intent:navigational, request_type:specific_solutions. Primary failure mode: CONTEXT_LOSS (5 cases).</div>
+  <div class="verdict-rec">Safe to ship v2 for emotional_state:neutral, request_type:troubleshooting. Keep v1 for emotional_state:appreciative, topic_complexity:general_inquiry. Primary failure mode: CONTEXT_LOSS (6 cases).</div>
 </div>
+
 </body>
 </html>

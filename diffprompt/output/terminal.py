@@ -1,54 +1,57 @@
 """
 Rich terminal output renderer.
-Designed to fit in one screen — the constraint that makes it shareable.
+Clean, minimal, fits in one screen.
 """
 from __future__ import annotations
 from rich.console import Console
-from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
-from rich.columns import Columns
-from rich import box
+from rich.rule import Rule
 from diffprompt.models import DiffReport, Verdict, SliceResult
 
-
-console = Console()
+console = Console(highlight=False)
 
 VERDICT_COLOR = {
     Verdict.IMPROVEMENT: "green",
     Verdict.REGRESSION:  "red",
     Verdict.NEUTRAL:     "dim",
 }
-
 VERDICT_ICON = {
     Verdict.IMPROVEMENT: "✓",
     Verdict.REGRESSION:  "✗",
     Verdict.NEUTRAL:     "→",
 }
+VERDICT_LABEL = {
+    Verdict.IMPROVEMENT: "SHIP IT",
+    Verdict.NEUTRAL:     "CONDITIONAL",
+    Verdict.REGRESSION:  "DO NOT SHIP",
+}
 
 
 def render(report: DiffReport) -> None:
-    """Render the full diff report to terminal."""
-    _render_header(report)
-    _render_summary(report)
-    _render_behavioral_profile(report)
-    _render_key_examples(report)
-    _render_verdict(report)
-
-
-def _render_header(report: DiffReport) -> None:
     console.print()
-    console.print(f"[bold]diffprompt[/bold]  [dim]v0.1.0[/dim]")
-    console.print(f"[dim]model: {report.model}  judge: {report.judge}  tests: {len(report.test_cases)}[/dim]")
+    _header(report)
+    _summary(report)
+    _behavioral_profile(report)
+    _key_examples(report)
+    _verdict(report)
     console.print()
 
 
-def _render_summary(report: DiffReport) -> None:
-    # Score bar
-    score = report.regression_score
+def _header(report: DiffReport) -> None:
+    console.print(
+        f"[bold white]diffprompt[/bold white]  [dim]v0.1.0[/dim]  "
+        f"[dim]model:[/dim] [dim]{report.model}[/dim]  "
+        f"[dim]judge:[/dim] [dim]{report.judge}[/dim]  "
+        f"[dim]tests:[/dim] [dim]{len(report.test_cases)}[/dim]"
+    )
+    console.print()
+
+
+def _summary(report: DiffReport) -> None:
+    score  = report.regression_score
     filled = int(score / 5)
-    bar = "█" * filled + "░" * (20 - filled)
-    color = "green" if score >= 80 else "yellow" if score >= 60 else "red"
+    bar    = "█" * filled + "░" * (20 - filled)
+    color  = "green" if score >= 80 else "yellow" if score >= 60 else "red"
 
     console.print(f"[bold]━━ SUMMARY[/bold]")
     console.print(
@@ -60,88 +63,92 @@ def _render_summary(report: DiffReport) -> None:
     console.print()
 
 
-def _render_behavioral_profile(report: DiffReport) -> None:
+def _behavioral_profile(report: DiffReport) -> None:
     if not report.slices:
+        return
+
+    depth1 = [s for s in report.slices if s.depth == 1]
+    wins   = [s for s in depth1 if s.verdict == Verdict.IMPROVEMENT]
+    fails  = [s for s in depth1 if s.verdict == Verdict.REGRESSION]
+
+    if not wins and not fails:
         return
 
     console.print("[bold]━━ BEHAVIORAL PROFILE[/bold]")
 
-    wins  = [s for s in report.slices if s.verdict == Verdict.IMPROVEMENT and s.depth == 1]
-    fails = [s for s in report.slices if s.verdict == Verdict.REGRESSION  and s.depth == 1]
-
     if wins:
         console.print("  [green]v2 performs well when...[/green]")
         for s in wins[:3]:
-            conf = _confidence_label(s)
-            console.print(
-                f"  [green]✓[/green] {s.label:<35} "
-                f"[dim]score {s.mean_similarity:.2f}  {s.n} tests  {conf}[/dim]"
-            )
+            _slice_row(s, "green")
 
     if fails:
         console.print("  [red]v2 struggles when...[/red]")
         for s in fails[:3]:
-            conf = _confidence_label(s)
-            console.print(
-                f"  [red]✗[/red] {s.label:<35} "
-                f"[dim]score {s.mean_similarity:.2f}  {s.n} tests  {conf}[/dim]"
-            )
+            _slice_row(s, "red")
 
     console.print()
 
 
-def _render_key_examples(report: DiffReport) -> None:
+def _slice_row(s: SliceResult, color: str) -> None:
+    icon = "✓" if color == "green" else "✗"
+    warn = _warn(s)
+    console.print(
+        f"  [{color}]{icon}[/{color}] [bold]{s.label:<38}[/bold] "
+        f"[dim]score [/dim][{color}]{s.mean_similarity:.2f}[/{color}]"
+        f"[dim]  {s.n} tests[/dim]"
+        + (f"  {warn}" if warn else "")
+    )
+
+
+def _warn(s: SliceResult) -> str:
+    if s.confidence >= 0.7:
+        return ""
+    if s.n < 3:
+        return "[yellow]⚠ low n[/yellow]"
+    if s.typical_ratio == 0:
+        return "[yellow]⚠ no typical tests[/yellow]"
+    if s.variance > 0.15:
+        return "[yellow]⚠ high variance[/yellow]"
+    return ""
+
+
+def _key_examples(report: DiffReport) -> None:
     if not report.key_examples:
         return
 
     console.print("[bold]━━ KEY EXAMPLES[/bold]")
 
     slot_labels = {
-        "most_important":  "MOST IMPORTANT",
+        "most_important":   "MOST IMPORTANT",
         "best_improvement": "BEST IMPROVEMENT",
         "most_surprising":  "MOST SURPRISING",
     }
 
     for ex in report.key_examples:
-        diff = ex.diff
+        d     = ex.diff
         label = slot_labels.get(ex.slot, ex.slot.upper())
-        tags = "  ".join(f"{k}:{v}" for k, v in diff.test_case.tags.items())
-        color = VERDICT_COLOR[diff.verdict]
+        color = VERDICT_COLOR[d.verdict]
+        tags  = "  ".join(f"[dim]{k}:[/dim][cyan]{v}[/cyan]" for k, v in d.test_case.tags.items())
 
-        console.print(
-            f"  [bold]{label}[/bold]  [dim]{tags}  divergence {diff.divergence:.2f}[/dim]"
-        )
-        console.print(f"  [dim]input[/dim]   {diff.test_case.input[:80]}")
-        console.print(f"  [dim]v1[/dim]      {diff.v1_output[:100]}")
-        console.print(f"  [{color}]v2[/{color}]      {diff.v2_output[:100]}")
-        console.print(f"  [dim]why[/dim]     {ex.why_it_matters}")
-        console.print()
+        console.print(f"\n  [bold]{label}[/bold]  {tags}  [dim]divergence[/dim] [{color}]{d.divergence:.2f}[/{color}]")
+        console.print(f"  [dim]input[/dim]  {_clip(d.test_case.input, 90)}")
+        console.print(f"  [dim]v1   [/dim]  [dim]{_clip(d.v1_output, 100)}[/dim]")
+        console.print(f"  [dim]v2   [/dim]  [{color}]{_clip(d.v2_output, 100)}[/{color}]")
+        console.print(f"  [dim]why  [/dim]  [italic dim]{_clip(ex.why_it_matters, 160)}[/italic dim]")
 
-
-def _render_verdict(report: DiffReport) -> None:
-    color = VERDICT_COLOR[report.verdict]
-    icon = "✓" if report.verdict == Verdict.IMPROVEMENT else \
-           "⚠" if report.verdict == Verdict.NEUTRAL else "✗"
-
-    verdict_map = {
-        Verdict.IMPROVEMENT: "SHIP IT",
-        Verdict.NEUTRAL:     "CONDITIONAL",
-        Verdict.REGRESSION:  "DO NOT SHIP",
-    }
-
-    console.print(f"[bold]━━ VERDICT[/bold]")
-    console.print(f"  [{color}]{icon} {verdict_map[report.verdict]}[/{color}]")
-    console.print(f"  [dim]{report.recommendation}[/dim]")
     console.print()
 
 
-def _confidence_label(s: SliceResult) -> str:
-    if s.confidence >= 0.7:
-        return ""
-    if s.typical_ratio == 0:
-        return "[yellow]⚠ no typical tests[/yellow]"
-    if s.n < 5:
-        return "[yellow]⚠ low n[/yellow]"
-    if s.variance > 0.15:
-        return "[yellow]⚠ high variance[/yellow]"
-    return ""
+def _verdict(report: DiffReport) -> None:
+    color = VERDICT_COLOR[report.verdict]
+    icon  = VERDICT_ICON[report.verdict]
+    label = VERDICT_LABEL[report.verdict]
+
+    console.print("[bold]━━ VERDICT[/bold]")
+    console.print(f"  [{color}]{icon} {label}[/{color}]")
+    console.print(f"  [dim]{report.recommendation}[/dim]")
+
+
+def _clip(text: str, n: int) -> str:
+    text = text.replace("\n", " ").strip()
+    return text[:n] + "…" if len(text) > n else text
