@@ -181,7 +181,8 @@ async def _run_diff(**kwargs):
 
 def _compute_verdict(n_improved, n_regressed, n_neutral):
     from diffprompt.models import Verdict
-    if n_improved > n_regressed and n_improved > n_neutral * 0.5:
+    score_ratio = n_improved / max(1, n_improved + n_regressed + n_neutral)
+    if n_improved > n_regressed and score_ratio >= 0.6:
         return Verdict.IMPROVEMENT
     if n_regressed > n_improved:
         return Verdict.REGRESSION

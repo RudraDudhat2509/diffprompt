@@ -47,15 +47,15 @@ async def call_ollama(
                 await asyncio.sleep(_RETRY_DELAY * (attempt + 1))
     return None
 
-
 async def call_groq(
     model: str,
     prompt: str,
     system: Optional[str] = None,
 ) -> Optional[str]:
-    """Call Groq API. Returns None if API key missing or call fails."""
+    """Call Groq API with loud error logging and backoff."""
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
+        print("\n[DEBUG] The code cannot find your GROQ_API_KEY. VS Code is not loading it.")
         return None
 
     messages = []
@@ -63,9 +63,12 @@ async def call_groq(
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})
 
+    _MAX_RETRIES = 5  # Increased from 2 to handle rate limits better
+
     for attempt in range(_MAX_RETRIES):
         try:
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            # We keep your trust_env=False fix here
+            async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
                 r = await client.post(
                     f"{GROQ_BASE}/chat/completions",
                     headers={"Authorization": f"Bearer {api_key}"},
@@ -73,15 +76,27 @@ async def call_groq(
                 )
                 r.raise_for_status()
                 return r.json()["choices"][0]["message"]["content"]
+                
         except httpx.HTTPStatusError as e:
-            if e.response.status_code in (429, 503):
-                # Rate limited — back off and retry
-                await asyncio.sleep(_RETRY_DELAY * (2 ** attempt))
-            else:
+            if e.response.status_code == 401:
+                print(f"\n[DEBUG] HTTP 401: Your Groq API key is rejected.")
                 return None
-        except Exception:
+            elif e.response.status_code in (429, 503):
+                # We read the exact header Groq sends to know how long to wait
+                wait_time = float(e.response.headers.get("retry-after", _RETRY_DELAY * (2 ** attempt)))
+                print(f"\n[DEBUG] Rate limit hit. Waiting {wait_time}s...")
+                await asyncio.sleep(wait_time)
+            else:
+                print(f"\n[DEBUG] Groq API returned HTTP {e.response.status_code}: {e.response.text}")
+                return None
+        except httpx.ConnectError:
+             print("\n[DEBUG] ConnectError: Still blocked from the internet. Are you behind a corporate firewall?")
+             return None
+        except Exception as e:
+            print(f"\n[DEBUG] Unexpected error: {str(e)}")
             if attempt < _MAX_RETRIES - 1:
                 await asyncio.sleep(_RETRY_DELAY)
+                
     return None
 
 
@@ -89,7 +104,7 @@ async def call_cascade(
     prompt: str,
     system: Optional[str] = None,
     local_model: str = "qwen2.5:7b",
-    groq_model: str = "llama-3.3-70b-versatile",
+    groq_model: str = "llama-3.1-8b-instant",
     local_only: bool = False,
 ) -> tuple[str, str]:
     """
