@@ -55,6 +55,8 @@ class DiffResult(BaseModel):
     importance_score: float = 0.0
     cluster_label: int = -1
     cluster_centrality: float = 0.0
+    v1_latency_ms: Optional[float] = None
+    v2_latency_ms: Optional[float] = None
 
 
 class SliceResult(BaseModel):
