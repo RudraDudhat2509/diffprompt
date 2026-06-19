@@ -16,6 +16,39 @@ class _FakeEmbedder:
         return np.zeros((len(sentences), 4))
 
 
+def test_coerce_tag_handles_dicts_and_strings():
+    assert Ontology._coerce_tag("formal") == "formal"
+    # {tag: description} -> the key is the tag
+    assert Ontology._coerce_tag({"formal": "a description"}) == "formal"
+    # {"name": tag, "description": ...} -> the name field's value is the tag
+    assert Ontology._coerce_tag({"name": "formal", "description": "x"}) == "formal"
+    assert Ontology._coerce_tag(None) == ""
+
+
+async def test_infer_coerces_nonstring_tags():
+    """
+    Regression for #10: the model sometimes returns tags as dicts. infer must
+    coerce them to hashable strings instead of crashing build_anchors later.
+    """
+    raw = '{"tone": [{"formal": "x"}, "casual"], "intent": ["lookup"]}'
+    o = Ontology()
+    with patch("diffprompt.core.ontology.call_cascade", new=AsyncMock(return_value=(raw, "groq/x"))):
+        await o.infer("a prompt")
+
+    assert o.dimensions == {"tone": ["formal", "casual"], "intent": ["lookup"]}
+    # every tag must be a hashable str so build_anchors can key on it
+    for tags in o.dimensions.values():
+        assert all(isinstance(t, str) for t in tags)
+
+
+async def test_infer_falls_back_when_unusable():
+    """Garbage / non-dict JSON falls back to default dimensions, never empty."""
+    o = Ontology()
+    with patch("diffprompt.core.ontology.call_cascade", new=AsyncMock(return_value=("[1, 2, 3]", "groq/x"))):
+        await o.infer("a prompt")
+    assert o.dimensions  # non-empty defaults
+
+
 def test_parse_anchors_json_array():
     assert Ontology._parse_anchors('["a", "b", "c"]') == ["a", "b", "c"]
 

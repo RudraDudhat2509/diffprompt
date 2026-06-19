@@ -43,6 +43,13 @@ Each sentence must clearly represent "{tag}" and be distinct from each other.
 Return ONLY a JSON array of 3 strings. No explanation."""
 
 
+_DEFAULT_DIMENSIONS = {
+    "user_intent":     ["informational", "transactional", "complaint", "other"],
+    "emotional_state": ["neutral", "frustrated", "confused", "urgent"],
+    "request_type":    ["specific", "open_ended", "troubleshooting"],
+}
+
+
 def _extract_json_object(raw: str) -> str:
     """Extract the first {...} block from raw LLM output."""
     clean = re.sub(r"```(?:json)?|```", "", raw).strip()
@@ -79,17 +86,45 @@ class Ontology:
             INFER_PROMPT.format(prompt=prompt),
             local_only=local_only,
         )
+        self.dimensions = {}
         try:
             parsed = json.loads(_extract_json_object(raw))
-            if len(parsed) == 1 and isinstance(list(parsed.values())[0], dict):
+            if isinstance(parsed, dict) and len(parsed) == 1 and isinstance(list(parsed.values())[0], dict):
                 parsed = list(parsed.values())[0]
-            self.dimensions = {k: v for k, v in parsed.items() if isinstance(v, list)}
-        except json.JSONDecodeError:
-            self.dimensions = {
-                "user_intent":    ["informational", "transactional", "complaint", "other"],
-                "emotional_state": ["neutral", "frustrated", "confused", "urgent"],
-                "request_type":   ["specific", "open_ended", "troubleshooting"],
-            }
+            if isinstance(parsed, dict):
+                for dimension, tags in parsed.items():
+                    if not isinstance(tags, list):
+                        continue
+                    clean = [t for t in (self._coerce_tag(x) for x in tags) if t]
+                    if clean:
+                        self.dimensions[str(dimension)] = clean
+        except (json.JSONDecodeError, AttributeError, TypeError):
+            pass
+
+        # Fall back to sensible defaults if inference produced nothing usable.
+        if not self.dimensions:
+            self.dimensions = {k: list(v) for k, v in _DEFAULT_DIMENSIONS.items()}
+
+    @staticmethod
+    def _coerce_tag(value) -> str:
+        """
+        Tags must be hashable strings (they become dict keys downstream). The
+        inference model is non-deterministic and sometimes returns a tag as a
+        dict. Two shapes show up:
+          {"name": "formal", "description": "..."}  -> the name-like field's value
+          {"formal": "<description>"}               -> the key itself
+        """
+        if isinstance(value, str):
+            return value.strip()
+        if isinstance(value, dict) and value:
+            for key in ("name", "tag", "label", "value", "type"):
+                v = value.get(key)
+                if isinstance(v, str) and v.strip():
+                    return v.strip()
+            return str(next(iter(value))).strip()  # no name-like field: use the key
+        if value is None:
+            return ""
+        return str(value).strip()
 
     async def build_anchors(
         self, prompt: str, local_only: bool = False, concurrency: int = 5
