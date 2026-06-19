@@ -299,7 +299,7 @@ Generates `n` test cases distributed across the four taxonomy buckets (45% typic
 #### diversity_score
 
 ```python
-def diversity_score(test_cases: list[TestCase], embedder: SentenceTransformer) -> float
+def diversity_score(test_cases: list[TestCase]) -> float
 ```
 
 Computes how diverse the test suite is. Returns `1 - mean_pairwise_similarity`. Higher is more diverse. A score below 0.4 means many inputs are semantically redundant.
@@ -485,6 +485,7 @@ where `surprise = divergence * (1 - input_length / 50)`. Short inputs that chang
 ```python
 async def select_key_examples(
     diffs: list[DiffResult],
+    top_n: int = 3,
     local_only: bool = False,
 ) -> list[KeyExample]
 ```
