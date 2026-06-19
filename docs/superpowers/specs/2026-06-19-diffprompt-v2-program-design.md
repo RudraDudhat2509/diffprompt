@@ -143,15 +143,25 @@ Emerged during product design; the agentic-reliability flagship and the stronges
 - **Output**: trajectory timeline, root-cause pin, replay-from-step, "add as a regression test".
 - **Risks**: framework coupling (keep the core trajectory model agnostic, adapters per framework); replay fidelity (deterministic tool stubs for replayed steps).
 
+### 6.5 Red-team / security (new pillar) — "can your prompt be broken?"
+Squarely on-niche (LLM security; leverages the user's garak experience). Auto-attacks a system prompt and shows the prompts that succeeded.
+- **Attack suite**: a curated, versioned library of probes across families — prompt injection / instruction override, system-prompt extraction, role-play / DAN, encoding & obfuscation (base64 / leetspeak / many-shot), data exfiltration — mapped to **OWASP LLM Top 10** and **garak** probe families. Pluggable so new attacks drop in.
+- **Run**: fire each attack against the system prompt via the provider; a specialized security-judge decides success (did it comply / leak / break policy?). Reuses the runner; the ADVERSARIAL generator bucket seeds novel variants.
+- **Output (evidence-first)**: resilience score (blocked / total) + by-family breakdown; and the headline — the **verbatim attack inputs that succeeded plus the exact leaked or compliant output**, severity-ranked (critical = prompt extraction / data exfil).
+- **Harden**: auto-generate a hardened system prompt (refuse meta-requests about instructions, pin identity, treat retrieved/user text as data) → re-test → projected resilience. Reuses the Fix loop.
+- **CI gate**: pin attacks as an adversarial golden set; block merge on any CRITICAL success — a security regression guard.
+- **CLI**: `diffprompt redteam <system_prompt> [--suite owasp|garak|all]`.
+- **Risks**: suite freshness (jailbreaks evolve — version it, allow community probes); security-judge accuracy (false negatives are dangerous — bias toward flagging, require human confirmation on criticals).
+
 ## 7. Product surfaces & UX
 
 **Design principle — evidence over abstraction.** Every screen ends in evidence or an action: see the behavior → find the cause → apply a fix → re-verify. Abstract dashboards (radar/bubble charts) are demoted to a secondary "profile" view; the spine is the actual outputs, the actual prompt sentence, the actual trajectory step. (This was an explicit course-correction during design — early chart-only mockups were rejected as "too abstract.")
 
 **Entry — two ways in** (`diffprompt` composer, mirrors the CLI):
-- **Prompt** — paste v1/v2 (or load from a file / GitHub PR), choose provider · model · judge · test source (auto-generate N *or* upload real `.jsonl`), Run. → feeds Diff / Fix / Drift.
+- **Prompt** — paste v1/v2 (or load from a file / GitHub PR), choose provider · model · judge · test source (auto-generate N *or* upload real `.jsonl`), Run. → feeds Diff / Fix / Drift / Red-team.
 - **Agent** — not pasted; instrument once (`@trace` / OTLP / LangGraph callback) or drop a `trace.json`. → feeds Agent / Provenance / Trace.
 
-**Six surfaces, one engine** (they share the trajectory model, context-provenance, and counterfactual replay):
+**Seven surfaces, one engine** (they share the trajectory model, context-provenance, and counterfactual replay):
 
 | Surface | Job | Signature element |
 |---|---|---|
@@ -161,6 +171,7 @@ Emerged during product design; the agentic-reliability flagship and the stronges
 | **Trace** | where did time/money go; what failed quietly | OTel run waterfall + cost/tokens/reliability + Langfuse/Phoenix export |
 | **Agent** | where did the agent go wrong | trajectory timeline + root-cause step + replay-from-step |
 | **Provenance** | why did it do that / was it hijacked | per-source influence + trust + verbatim injected text + counterfactual |
+| **Red-team** | can your prompt be broken? | resilience score + the verbatim jailbreaks that succeeded + auto-hardened prompt + CI gate |
 
 **Design system (RESOLVED — matches the portfolio, warm editorial; not the earlier dark/gold).** Cream paper `#f3ecdf`, rust/terracotta accent `#b5532f`, high-contrast serif display (Fraunces) with rust-italic emphasis, JetBrains Mono for data/code, black pill buttons, label/value cards with thin dividers, a dark mono ticker with `✦` separators, subtle outlined deco circles. Reference mockups (entry + all six surfaces) live in `.superpowers/brainstorm/`.
 
@@ -179,6 +190,7 @@ diffprompt drift check <baseline>
 diffprompt watch <baseline>
 diffprompt provenance <trace.json> # Idea 3
 diffprompt agent <trace.json>      # agent debugger (trajectory + root cause + replay)
+diffprompt redteam <system_prompt> # jailbreak/injection suite + auto-harden
 diffprompt trace <run-id>          # observability waterfall for a run
 diffprompt serve                   # web + API (the composer + six surfaces)
 diffprompt replay <report.json>    # cache replay
@@ -192,7 +204,7 @@ Consistent flags across commands: `--model`, `--judge`, `--provider`, `--local-o
 
 ## 11. Phasing (build order; all speced deep, sequenced for delivery)
 - **Phase 0 — Foundation**: providers, retry, logging, streaming orchestrator, telemetry, caching, test infra + CI gates. *Everything else depends on this.*
-- **Phase 1 — Attribution**: pure analysis on the new engine; fastest standalone win after foundation.
+- **Phase 1 — Attribution + Red-team**: pure analysis on the new engine, no service infra — the fastest standalone wins after foundation. Red-team is also the strongest near-term niche signal (LLM security).
 - **Phase 2 — Drift**: store + scheduler + worker pool + alerting + first web views (the observability hero).
 - **Phase 3 — Provenance + Agent debugger**: source tagging + ablation + trust model + LangGraph adapter; trajectory capture, root-cause detection, replay-from-step. These two share the counterfactual machinery, so they ship together.
 - **Phase 4 — Web maturation**: the composer entry + unify all six surfaces in the dashboard, Docker self-host, polish.
@@ -202,6 +214,7 @@ Consistent flags across commands: `--model`, `--judge`, `--provider`, `--local-o
 - Reliability: 0 unhandled exceptions across a 100-run live soak; retry recovers ≥ 95% of transient failures.
 - Accuracy: judge agreement ≥ 0.8 on the eval set; attribution efficiency-axiom error < 5%.
 - Quality: coverage ≥ 85%; ruff + mypy clean in CI.
+- Security: 0 CRITICAL jailbreaks pass the bundled suite against the default hardened template; the red-team CI gate catches a planted regression.
 - Traction: stars, and at least one external user running drift monitoring.
 
 ## 13. Risks (program-level)
@@ -215,6 +228,7 @@ Consistent flags across commands: `--model`, `--judge`, `--provider`, `--local-o
 ## Appendix A — mapping to `future-ideas/IDEAS.md`
 - Idea 1 → §6.1 Attribution. Idea 2 → §6.2 Drift. Idea 3 → §6.3 Provenance. The repo's own notes (Idea 2 fastest to users, Idea 1 deepest interview story, Idea 3 most unique) are reflected in the phasing rationale.
 - §6.4 **Agent debugger** is a new pillar added during product design — not in the original IDEAS.md. It composes Provenance + the counterfactual into a trajectory debugger and is the clearest single expression of the agentic-reliability niche.
+- §6.5 **Red-team** is likewise a new pillar — auto jailbreak/injection testing + hardening, the clearest expression of the LLM-security niche and a natural fit with the user's garak work.
 
 ## Appendix B — validated mockups
 Interactive mockups built and reviewed via the brainstorming visual companion (warm-editorial), persisted in `.superpowers/brainstorm/`:
@@ -224,3 +238,4 @@ Interactive mockups built and reviewed via the brainstorming visual companion (w
 - `observability-trace.html` — OTel run waterfall + cost/reliability + Langfuse export
 - `agent-debugger.html` — trajectory timeline + root-cause + replay
 - `provenance-trace.html` — per-source influence + injected text + counterfactual
+- `security-redteam.html` — resilience score + the jailbreaks that succeeded + auto-harden + CI gate
