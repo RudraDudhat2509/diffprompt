@@ -5,6 +5,7 @@ Self-contained single-file output, no external dependencies.
 from __future__ import annotations
 from collections import defaultdict
 from diffprompt.models import DiffReport, Verdict
+from diffprompt.output.insights import build_insights
 
 _VERDICT_COLOR = {
     Verdict.IMPROVEMENT: "#22c55e",
@@ -24,9 +25,12 @@ def render_html(report: DiffReport) -> str:
     verdict_color = _VERDICT_COLOR[report.verdict]
     verdict_label = _VERDICT_LABEL[report.verdict]
 
+    ins           = build_insights(report)
     slices_html   = _render_slices(report)
     examples_html = _render_examples(report)
     clusters_html = _render_clusters(report)
+    tradeoff_html = _render_tradeoff(ins)
+    metrics_html  = _render_metrics(ins)
 
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -85,11 +89,10 @@ def render_html(report: DiffReport) -> str:
   <span>diversity: {report.diversity_score:.2f}</span>
 </div>
 
-<h2>Prompts</h2>
-<div class="prompt-label">v1 — baseline</div>
-<div class="prompt-box">{_esc(report.prompt_v1)}</div>
-<div class="prompt-label">v2 — candidate</div>
-<div class="prompt-box">{_esc(report.prompt_v2)}</div>
+<div class="verdict-block">
+  <div class="verdict-label">{verdict_label} &nbsp; <span style="color:{score_color}">{score}/100</span></div>
+  <div class="verdict-rec">{_esc(ins.headline or report.recommendation)}</div>
+</div>
 
 <h2>Summary</h2>
 <div class="score-block">
@@ -103,19 +106,60 @@ def render_html(report: DiffReport) -> str:
     </div>
   </div>
 </div>
+{metrics_html}
 
+{tradeoff_html}
 {slices_html}
-{examples_html}
 {clusters_html}
+{examples_html}
 
-<h2>Verdict</h2>
-<div class="verdict-block">
-  <div class="verdict-label">{verdict_label}</div>
-  <div class="verdict-rec">{_esc(report.recommendation)}</div>
-</div>
+<h2>Prompts</h2>
+<div class="prompt-label">v1 — baseline</div>
+<div class="prompt-box">{_esc(report.prompt_v1)}</div>
+<div class="prompt-label">v2 — candidate</div>
+<div class="prompt-box">{_esc(report.prompt_v2)}</div>
 
 </body>
 </html>"""
+
+
+def _render_metrics(ins) -> str:
+    chips = []
+    if ins.latency_ratio and ins.latency_ratio >= 1.1:
+        chips.append(f"⚡ {ins.latency_ratio:.1f}× faster")
+    elif ins.latency_ratio and ins.latency_ratio <= 0.9:
+        chips.append(f"🐢 {1 / ins.latency_ratio:.1f}× slower")
+    if ins.length_pct <= -10:
+        chips.append(f"✂ {abs(ins.length_pct):.0f}% shorter")
+    elif ins.length_pct >= 10:
+        chips.append(f"+ {ins.length_pct:.0f}% longer")
+    if ins.sparkline:
+        chips.append(f"spread {_esc(ins.sparkline)}")
+    if not chips:
+        return ""
+    inner = "".join(f'<span class="cluster">{_esc(c)}</span>' for c in chips)
+    return f"<div class='cluster-wrap' style='margin-top:0.75rem'>{inner}</div>"
+
+
+def _render_tradeoff(ins) -> str:
+    if not ins.gained and not ins.lost:
+        return ""
+    rows = []
+    for i in range(max(len(ins.gained), len(ins.lost))):
+        g = _esc(ins.gained[i]) if i < len(ins.gained) else ""
+        l = _esc(ins.lost[i]) if i < len(ins.lost) else ""
+        rows.append(
+            f'<tr><td style="color:#22c55e;padding:0.2rem 1.5rem 0.2rem 0">'
+            f'{"+ " + g if g else ""}</td>'
+            f'<td style="color:#ef4444;padding:0.2rem 0">{"- " + l if l else ""}</td></tr>'
+        )
+    return (
+        "<h2>The Trade-off</h2>"
+        '<table class="slice-table"><tr>'
+        '<td style="color:#475569;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em">Gained</td>'
+        '<td style="color:#475569;font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em">Lost</td>'
+        f"</tr>{''.join(rows)}</table>"
+    )
 
 
 def _render_slices(report: DiffReport) -> str:

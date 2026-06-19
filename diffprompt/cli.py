@@ -140,6 +140,8 @@ async def _run_diff(**kwargs):
                 test_case=tc, v1_output=v1_outputs[i], v2_output=v2_outputs[i],
                 similarity=similarities[i], divergence=1 - similarities[i],
                 verdict=verdict, reason=reason, judge_confidence=confidence,
+                v1_latency_ms=v1_results[tc.id].latency_ms,
+                v2_latency_ms=v2_results[tc.id].latency_ms,
             ))
         p.update(task, description="[green]✓[/green] Diff complete")
 
