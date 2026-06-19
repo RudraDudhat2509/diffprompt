@@ -8,3 +8,5 @@ build/
 venv/
 diffprompt_report.*
 diffprompt.ontology.json
+.diffprompt_cache/
+.superpowers/
