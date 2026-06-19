@@ -7,6 +7,7 @@ Two steps:
 3. Tag test inputs using embedding similarity to anchors (no LLM)
 """
 from __future__ import annotations
+import asyncio
 import json
 import re
 from typing import Optional
@@ -90,29 +91,45 @@ class Ontology:
                 "request_type":   ["specific", "open_ended", "troubleshooting"],
             }
 
-    async def build_anchors(self, prompt: str, local_only: bool = False) -> None:
-        """Generate 3 anchor sentences per tag. One LLM call per tag."""
-        for dimension, tags in self.dimensions.items():
-            self.anchors[dimension] = {}
-            for tag in tags:
+    async def build_anchors(
+        self, prompt: str, local_only: bool = False, concurrency: int = 5
+    ) -> None:
+        """
+        Generate anchor sentences per tag — one LLM call per tag, all fired
+        concurrently (bounded by `concurrency`) instead of one at a time.
+        """
+        sem = asyncio.Semaphore(concurrency)
+
+        async def fetch(dimension: str, tag: str) -> tuple[str, str, list[str]]:
+            async with sem:
                 raw, _ = await call_cascade(
                     ANCHOR_PROMPT.format(tag=tag, dimension=dimension, prompt=prompt),
                     local_only=local_only,
                 )
-                try:
-                    parsed = json.loads(_extract_json_array(raw))
-                    if isinstance(parsed, list) and parsed:
-                        self.anchors[dimension][tag] = [str(s) for s in parsed]
-                    else:
-                        self.anchors[dimension][tag] = [raw.strip()[:200]]
-                except Exception:
-                    self.anchors[dimension][tag] = [raw.strip()[:200]]
+            return dimension, tag, self._parse_anchors(raw)
 
-        # Build embeddings for all anchors
+        pairs = [(d, t) for d, tags in self.dimensions.items() for t in tags]
+        results = await asyncio.gather(*[fetch(d, t) for d, t in pairs])
+
+        for dimension, tag, sentences in results:
+            self.anchors.setdefault(dimension, {})[tag] = sentences
+
+        # Build embeddings for all anchors (local CPU, no network)
         for dimension, tag_anchors in self.anchors.items():
             self.anchor_embeddings[dimension] = {}
             for tag, sentences in tag_anchors.items():
                 self.anchor_embeddings[dimension][tag] = self.embedder.encode(sentences)
+
+    @staticmethod
+    def _parse_anchors(raw: str) -> list[str]:
+        """Parse an anchor LLM response into a list of sentences, with fallback."""
+        try:
+            parsed = json.loads(_extract_json_array(raw))
+            if isinstance(parsed, list) and parsed:
+                return [str(s) for s in parsed]
+        except Exception:
+            pass
+        return [raw.strip()[:200]]
 
     def tag(self, input_text: str) -> dict[str, str]:
         """

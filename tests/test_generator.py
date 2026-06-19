@@ -2,9 +2,10 @@
 Tests for the generator module.
 Run with: pytest tests/test_generator.py -v
 """
-import pytest
+from unittest.mock import AsyncMock, patch
+
 from diffprompt.models import TestCase, TestCategory
-from diffprompt.core.generator import diversity_score
+from diffprompt.core.generator import diversity_score, generate_test_cases
 
 
 def make_test_cases(inputs: list[str], category=TestCategory.TYPICAL) -> list[TestCase]:
@@ -75,3 +76,13 @@ def test_test_category_values():
     assert TestCategory.ADVERSARIAL in categories
     assert TestCategory.BOUNDARY in categories
     assert TestCategory.FORMAT in categories
+
+
+async def test_generate_test_cases_covers_all_buckets():
+    """All four buckets are generated (they now run concurrently via gather)."""
+    fake = AsyncMock(return_value=('["a", "b", "c", "d", "e"]', "local/x"))
+    with patch("diffprompt.core.generator.call_cascade", new=fake):
+        cases = await generate_test_cases("some prompt", n=20)
+
+    assert {c.category for c in cases} == set(TestCategory)
+    assert fake.call_count == 4  # one call per bucket

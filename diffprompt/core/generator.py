@@ -3,6 +3,7 @@ Test case generation using taxonomy-based prompting.
 Four buckets: typical, boundary, adversarial, format.
 """
 from __future__ import annotations
+import asyncio
 import json
 import re
 import uuid
@@ -53,14 +54,18 @@ async def generate_test_cases(
     ontology: Optional[Ontology] = None,
     local_only: bool = False,
 ) -> list[TestCase]:
-    """Generate n test cases across all taxonomy buckets."""
+    """Generate n test cases across all taxonomy buckets, all buckets in parallel."""
+    categories = list(DISTRIBUTION.items())
+    counts = [max(2, round(n * fraction)) for _, fraction in categories]
+
+    # Fire all four bucket generations concurrently instead of one at a time.
+    bucket_inputs = await asyncio.gather(*[
+        _generate_bucket(prompt, category, count, local_only)
+        for (category, _), count in zip(categories, counts)
+    ])
+
     test_cases: list[TestCase] = []
-
-    for category, fraction in DISTRIBUTION.items():
-        count = max(2, round(n * fraction))
-
-        inputs = await _generate_bucket(prompt, category, count, local_only)
-
+    for (category, _), count, inputs in zip(categories, counts, bucket_inputs):
         for inp in inputs[:count]:
             test_cases.append(TestCase(
                 id=str(uuid.uuid4()),
@@ -68,8 +73,6 @@ async def generate_test_cases(
                 category=category,
             ))
 
-    # BUG FIX: return was previously inside the for loop,
-    # causing only the first bucket (typical) to ever be generated.
     return test_cases
 
 

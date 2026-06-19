@@ -4,6 +4,7 @@ Determines verdict (improvement/regression/neutral) + reason per diff.
 Escalates to larger Groq model when confidence is low.
 """
 from __future__ import annotations
+import asyncio
 import json
 import re
 from diffprompt.models import Verdict, DiffResult, TestCase
@@ -68,6 +69,30 @@ async def judge_single(
             verdict, reason, confidence = _parse_judge_response(escalated)
 
     return verdict, reason, confidence
+
+
+async def judge_all(
+    test_cases: list[TestCase],
+    v1_outputs: list[str],
+    v2_outputs: list[str],
+    similarities: list[float],
+    local_only: bool = False,
+    concurrency: int = 5,
+) -> list[tuple[Verdict, str, float]]:
+    """
+    Judge every (v1, v2) pair concurrently, bounded by `concurrency`.
+    Returns results in the same order as `test_cases` (gather preserves order).
+    """
+    sem = asyncio.Semaphore(concurrency)
+
+    async def one(tc, v1, v2, sim):
+        async with sem:
+            return await judge_single(tc, v1, v2, sim, local_only=local_only)
+
+    return await asyncio.gather(*[
+        one(tc, v1_outputs[i], v2_outputs[i], similarities[i])
+        for i, tc in enumerate(test_cases)
+    ])
 
 
 def _parse_judge_response(raw: str) -> tuple[Verdict, str, float]:
