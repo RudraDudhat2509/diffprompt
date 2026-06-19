@@ -1,5 +1,7 @@
 # diffprompt
 
+[![CI](https://github.com/RudraDudhat2509/diffprompt/actions/workflows/ci.yml/badge.svg)](https://github.com/RudraDudhat2509/diffprompt/actions/workflows/ci.yml)
+
 > git diff for your prompt's behavior
 
 ```bash
