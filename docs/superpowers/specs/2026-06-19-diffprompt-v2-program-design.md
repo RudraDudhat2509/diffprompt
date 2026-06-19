@@ -133,10 +133,39 @@ diffprompt/
 - **Output**: provenance trace per agent action; web view of the influence breakdown.
 - **Risks**: influence without attention access is approximate (counterfactual is the honest method; state limits clearly); agent-framework coupling (keep core agnostic).
 
-## 7. Web UI / service
-- **Backend**: FastAPI (existing user expertise). REST for reports/baselines/traces; SSE/WebSocket for live runs and drift updates. Single-tenant/self-host in v2.
-- **Frontend**: **OPEN DECISION (see §10)** — proposed Vite + React + Tailwind, aesthetic matched to the portfolio theme (verify: memory conflicts cinematic-gold vs beige-editorial). Views: diff report viewer, attribution explorer, drift timeline, provenance trace.
-- **Packaging**: `diffprompt serve` boots API + static dashboard; Docker image for self-host.
+### 6.4 Agent debugger (new pillar) — "where did the agent go wrong?"
+Emerged during product design; the agentic-reliability flagship and the strongest tie to the niche (tool poisoning, memory/injection, multi-agent chains).
+- **Trajectory capture**: a multi-step agent run (plan → tool call → reasoning → action → response) as ordered, typed steps, each with status (ok/warn/fail), tokens, latency.
+- **Root-cause step**: pinpoint the step where the trajectory derailed (e.g. treated a tool result as an instruction), not just that the final output was wrong.
+- **Built on the other modules** — step-level context reuses **Provenance** (per-source influence + trust); the bad outcome is scored with the diff/judge; **replay-from-step-N with a fix applied** (quarantine a source, edit the prompt) reuses the **counterfactual ablation**.
+- **Trajectory diff**: compare two agent runs on the same task (v1 vs v2 agent), see where they diverged.
+- **Entry**: instrument once (`@trace` decorator / OTLP exporter / LangGraph callback) or upload a `trace.json`.
+- **Output**: trajectory timeline, root-cause pin, replay-from-step, "add as a regression test".
+- **Risks**: framework coupling (keep the core trajectory model agnostic, adapters per framework); replay fidelity (deterministic tool stubs for replayed steps).
+
+## 7. Product surfaces & UX
+
+**Design principle — evidence over abstraction.** Every screen ends in evidence or an action: see the behavior → find the cause → apply a fix → re-verify. Abstract dashboards (radar/bubble charts) are demoted to a secondary "profile" view; the spine is the actual outputs, the actual prompt sentence, the actual trajectory step. (This was an explicit course-correction during design — early chart-only mockups were rejected as "too abstract.")
+
+**Entry — two ways in** (`diffprompt` composer, mirrors the CLI):
+- **Prompt** — paste v1/v2 (or load from a file / GitHub PR), choose provider · model · judge · test source (auto-generate N *or* upload real `.jsonl`), Run. → feeds Diff / Fix / Drift.
+- **Agent** — not pasted; instrument once (`@trace` / OTLP / LangGraph callback) or drop a `trace.json`. → feeds Agent / Provenance / Trace.
+
+**Six surfaces, one engine** (they share the trajectory model, context-provenance, and counterfactual replay):
+
+| Surface | Job | Signature element |
+|---|---|---|
+| **Diff** | did v2 help or hurt? | verdict-first banner + behavioral slices |
+| **Fix** | exactly what to change | annotated prompt (top-4 by \|impact\|, rest collapsed) + word-level output diff + auto-generated v3 + projected score + one-click fix-and-re-test |
+| **Drift** | did the model change under me? | same-probe baseline-vs-today output diff + concrete shift metrics + alerting |
+| **Trace** | where did time/money go; what failed quietly | OTel run waterfall + cost/tokens/reliability + Langfuse/Phoenix export |
+| **Agent** | where did the agent go wrong | trajectory timeline + root-cause step + replay-from-step |
+| **Provenance** | why did it do that / was it hijacked | per-source influence + trust + verbatim injected text + counterfactual |
+
+**Design system (RESOLVED — matches the portfolio, warm editorial; not the earlier dark/gold).** Cream paper `#f3ecdf`, rust/terracotta accent `#b5532f`, high-contrast serif display (Fraunces) with rust-italic emphasis, JetBrains Mono for data/code, black pill buttons, label/value cards with thin dividers, a dark mono ticker with `✦` separators, subtle outlined deco circles. Reference mockups (entry + all six surfaces) live in `.superpowers/brainstorm/`.
+
+**Frontend stack:** Vite + React + Tailwind (lightweight, no SSR needed for a self-host dashboard).
+**Backend & packaging:** FastAPI; REST for reports/baselines/traces, SSE/WebSocket for live runs + drift. `diffprompt serve` boots API + static dashboard; Docker image for self-host. Single-tenant in v2.
 
 ## 8. Data model (store)
 Entities: `Run`, `Report`, `Baseline`, `Fingerprint`, `Attribution`, `ProvenanceTrace`, `Alert`. SQLite default (single file, zero-config); Postgres for the service. Pydantic models already define the report shape — extend, version with a schema migration tool (Alembic for Postgres path).
@@ -149,22 +178,24 @@ diffprompt baseline create <p>     # Idea 2
 diffprompt drift check <baseline>
 diffprompt watch <baseline>
 diffprompt provenance <trace.json> # Idea 3
-diffprompt serve                   # web + API
+diffprompt agent <trace.json>      # agent debugger (trajectory + root cause + replay)
+diffprompt trace <run-id>          # observability waterfall for a run
+diffprompt serve                   # web + API (the composer + six surfaces)
 diffprompt replay <report.json>    # cache replay
 ```
 Consistent flags across commands: `--model`, `--judge`, `--provider`, `--local-only`, `--output`, `-v/-vv`.
 
-## 10. Open decisions (need your call)
-1. **Frontend stack & theme** — Vite+React+Tailwind vs Next.js; and which portfolio aesthetic to match (cinematic-gold vs beige-editorial — memory conflicts, must verify against the live site).
-2. **Judge default** — keep Groq 8b fallback, or require a stronger judge by default given observed over-leniency? Affects accuracy goal.
-3. **Self-host only vs hosted later** — confirm v2 is single-tenant/self-host (no auth/billing).
+## 10. Open decisions
+1. ~~Frontend stack & theme~~ — **RESOLVED**: Vite + React + Tailwind; warm-editorial design system matching the portfolio (see §7). Mockups validated for entry + all six surfaces.
+2. **Judge default** *(still open)* — keep Groq 8b fallback, or require a stronger judge by default given observed over-leniency (live run scored 100/100)? Affects the accuracy goal. The Phase-0 judge eval harness (§5.7) will quantify this.
+3. **Self-host only vs hosted later** *(still open)* — confirm v2 is single-tenant/self-host (no auth/billing).
 
 ## 11. Phasing (build order; all speced deep, sequenced for delivery)
 - **Phase 0 — Foundation**: providers, retry, logging, streaming orchestrator, telemetry, caching, test infra + CI gates. *Everything else depends on this.*
 - **Phase 1 — Attribution**: pure analysis on the new engine; fastest standalone win after foundation.
 - **Phase 2 — Drift**: store + scheduler + worker pool + alerting + first web views (the observability hero).
-- **Phase 3 — Provenance**: source tagging + ablation + trust model + LangGraph adapter.
-- **Phase 4 — Web maturation**: unify all modules in the dashboard, Docker self-host, polish.
+- **Phase 3 — Provenance + Agent debugger**: source tagging + ablation + trust model + LangGraph adapter; trajectory capture, root-cause detection, replay-from-step. These two share the counterfactual machinery, so they ship together.
+- **Phase 4 — Web maturation**: the composer entry + unify all six surfaces in the dashboard, Docker self-host, polish.
 
 ## 12. Success metrics
 - Speed: n=20 diff < 30s warm; first event < 3s.
@@ -174,7 +205,7 @@ Consistent flags across commands: `--model`, `--judge`, `--provider`, `--local-o
 - Traction: stars, and at least one external user running drift monitoring.
 
 ## 13. Risks (program-level)
-- **Scope** — four phases is large; Phase 0 must stay disciplined or everything slips. Mitigate: ship each phase behind its own milestone, each independently useful.
+- **Scope** — the plan is large (5 phases, 6 surfaces); Phase 0 must stay disciplined or everything slips. Mitigate: ship each phase behind its own milestone, each independently useful.
 - **Cost/limits** — Shapley + drift probes multiply LLM calls. Mitigate: cache, budgets, rate limiter, local-first.
 - **Judge quality** — the accuracy goal hinges on it; the eval harness is a Phase-0 gate, not an afterthought.
 - **Web maintenance** — a dashboard is ongoing surface area; keep it thin and generated from the same event model.
@@ -183,3 +214,13 @@ Consistent flags across commands: `--model`, `--judge`, `--provider`, `--local-o
 
 ## Appendix A — mapping to `future-ideas/IDEAS.md`
 - Idea 1 → §6.1 Attribution. Idea 2 → §6.2 Drift. Idea 3 → §6.3 Provenance. The repo's own notes (Idea 2 fastest to users, Idea 1 deepest interview story, Idea 3 most unique) are reflected in the phasing rationale.
+- §6.4 **Agent debugger** is a new pillar added during product design — not in the original IDEAS.md. It composes Provenance + the counterfactual into a trajectory debugger and is the clearest single expression of the agentic-reliability niche.
+
+## Appendix B — validated mockups
+Interactive mockups built and reviewed via the brainstorming visual companion (warm-editorial), persisted in `.superpowers/brainstorm/`:
+- `composer-entry.html` — the two-ways-in entry (prompt paste vs agent instrument)
+- `fix-the-prompt.html` — annotated prompt + word-level output diff + auto-v3
+- `drift-monitor.html` — same-probe baseline-vs-today + shift metrics
+- `observability-trace.html` — OTel run waterfall + cost/reliability + Langfuse export
+- `agent-debugger.html` — trajectory timeline + root-cause + replay
+- `provenance-trace.html` — per-source influence + injected text + counterfactual
