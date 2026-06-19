@@ -73,7 +73,7 @@ async def _run_diff(**kwargs):
     from diffprompt.core.generator  import generate_test_cases, diversity_score
     from diffprompt.core.runner     import run_both
     from diffprompt.core.embedder   import batch_similarity
-    from diffprompt.core.judge      import judge_single
+    from diffprompt.core.judge      import judge_all
     from diffprompt.core.clusterer  import cluster_diffs
     from diffprompt.core.slicer     import compute_slices
     from diffprompt.core.scorer     import regression_score, select_key_examples
@@ -122,21 +122,23 @@ async def _run_diff(**kwargs):
         p.update(task, description=f"[green]✓[/green] {len(test_cases) * 2} completions done")
 
         p.update(task, description="Computing semantic diff...")
-        pairs = [(v1_results[tc.id].output, v2_results[tc.id].output) for tc in test_cases]
-        similarities = batch_similarity(pairs)
+        v1_outputs = [v1_results[tc.id].output for tc in test_cases]
+        v2_outputs = [v2_results[tc.id].output for tc in test_cases]
+        similarities = batch_similarity(list(zip(v1_outputs, v2_outputs)))
+
+        if kwargs["no_judge"]:
+            judgements = [(Verdict.NEUTRAL, "judge skipped", 1.0) for _ in test_cases]
+        else:
+            judgements = await judge_all(
+                test_cases, v1_outputs, v2_outputs, similarities, local_only=local_only,
+            )
 
         diffs = []
         for i, tc in enumerate(test_cases):
-            sim    = similarities[i]
-            v1_out = v1_results[tc.id].output
-            v2_out = v2_results[tc.id].output
-            if kwargs["no_judge"]:
-                verdict, reason, confidence = Verdict.NEUTRAL, "judge skipped", 1.0
-            else:
-                verdict, reason, confidence = await judge_single(tc, v1_out, v2_out, sim, local_only=local_only)
+            verdict, reason, confidence = judgements[i]
             diffs.append(DiffResult(
-                test_case=tc, v1_output=v1_out, v2_output=v2_out,
-                similarity=sim, divergence=1 - sim,
+                test_case=tc, v1_output=v1_outputs[i], v2_output=v2_outputs[i],
+                similarity=similarities[i], divergence=1 - similarities[i],
                 verdict=verdict, reason=reason, judge_confidence=confidence,
             ))
         p.update(task, description="[green]✓[/green] Diff complete")

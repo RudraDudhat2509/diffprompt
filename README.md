@@ -133,6 +133,12 @@ Different job. Different tool.
 
 Override any layer with `--model` and `--judge`.
 
+Groq calls are paced to stay under the free-tier rate limit. Tune it with `DIFFPROMPT_GROQ_RPM` (default 30; set `0` to disable):
+
+```bash
+export DIFFPROMPT_GROQ_RPM=60   # raise on paid tiers
+```
+
 ---
 
 ## CLI reference

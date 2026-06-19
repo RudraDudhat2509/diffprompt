@@ -12,12 +12,19 @@ import httpx
 import os
 from typing import Optional
 
+from diffprompt.ratelimit import AsyncRateLimiter
+
 
 OLLAMA_BASE = "http://localhost:11434"
 GROQ_BASE   = "https://api.groq.com/openai/v1"
 
 _MAX_RETRIES = 2
 _RETRY_DELAY = 1.0  # seconds
+
+# Paces every Groq request so concurrent callers don't burst past the free-tier
+# RPM cap. Tune with DIFFPROMPT_GROQ_RPM (set 0 to disable). Default 30 RPM is
+# safe for Groq's free tier; raise it on paid tiers.
+_GROQ_LIMITER = AsyncRateLimiter(rate=int(os.getenv("DIFFPROMPT_GROQ_RPM", "30")))
 
 
 async def call_ollama(
@@ -67,6 +74,7 @@ async def call_groq(
 
     for attempt in range(_MAX_RETRIES):
         try:
+            await _GROQ_LIMITER.acquire()  # pace before each request (retries included)
             # We keep your trust_env=False fix here
             async with httpx.AsyncClient(timeout=60.0, trust_env=False) as client:
                 r = await client.post(
