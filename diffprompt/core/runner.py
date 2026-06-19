@@ -9,6 +9,24 @@ from diffprompt.models import TestCase, RunResult
 from diffprompt.models.cascade import call_cascade
 
 
+def _split_model(model: str) -> dict[str, str]:
+    """
+    Parse a 'provider/name' model string into the kwarg call_cascade expects.
+    'groq/llama-3.3-70b-versatile' -> {'groq_model': 'llama-3.3-70b-versatile'}
+    'local/qwen2.5:7b'             -> {'local_model': 'qwen2.5:7b'}
+    Unknown/blank providers fall back to call_cascade defaults.
+    """
+    if not model or "/" not in model:
+        return {}
+    provider, name = model.split("/", 1)
+    provider = provider.lower()
+    if provider in ("local", "ollama"):
+        return {"local_model": name}
+    if provider == "groq":
+        return {"groq_model": name}
+    return {}
+
+
 async def run_single(
     test_case: TestCase,
     prompt: str,
@@ -21,6 +39,7 @@ async def run_single(
         test_case.input,
         system=prompt,
         local_only=local_only,
+        **_split_model(model),
     )
     latency_ms = (time.monotonic() - start) * 1000
 

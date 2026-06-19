@@ -17,19 +17,17 @@ def make_test_cases(inputs: list[str], category=TestCategory.TYPICAL) -> list[Te
 
 def test_diversity_score_identical_inputs():
     """Identical inputs should have very low diversity."""
-    from diffprompt.core.embedder import get_embedder
     cases = make_test_cases([
         "What is the capital of France?",
         "What is the capital of France?",
         "What is the capital of France?",
     ])
-    score = diversity_score(cases, get_embedder())
+    score = diversity_score(cases)
     assert score < 0.1
 
 
 def test_diversity_score_different_inputs():
     """Very different inputs should have high diversity."""
-    from diffprompt.core.embedder import get_embedder
     cases = make_test_cases([
         "What is the capital of France?",
         "I've been feeling really anxious lately and need help",
@@ -37,15 +35,14 @@ def test_diversity_score_different_inputs():
         "Write a haiku about autumn leaves",
         "What are the main causes of World War 1?",
     ])
-    score = diversity_score(cases, get_embedder())
+    score = diversity_score(cases)
     assert score > 0.5
 
 
 def test_diversity_score_returns_float_between_0_and_1():
     """diversity_score() should always return a float between 0 and 1."""
-    from diffprompt.core.embedder import get_embedder
     cases = make_test_cases(["hello", "world", "foo"])
-    score = diversity_score(cases, get_embedder())
+    score = diversity_score(cases)
     assert isinstance(score, float)
     assert 0.0 <= score <= 1.0
 

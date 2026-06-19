@@ -116,7 +116,9 @@ async def _run_diff(**kwargs):
         p.update(task, description=f"[green]✓[/green] {len(test_cases)} test cases  diversity={div_score:.2f}")
 
         p.update(task, description="Running both prompts...")
-        v1_results, v2_results = await run_both(test_cases, prompt_v1, prompt_v2, local_only=local_only)
+        v1_results, v2_results = await run_both(
+            test_cases, prompt_v1, prompt_v2, model=kwargs["model"], local_only=local_only,
+        )
         p.update(task, description=f"[green]✓[/green] {len(test_cases) * 2} completions done")
 
         p.update(task, description="Computing semantic diff...")
@@ -145,6 +147,7 @@ async def _run_diff(**kwargs):
         score        = regression_score(diffs)
         key_examples = await select_key_examples(
             sorted(diffs, key=lambda d: d.divergence, reverse=True)[:20],
+            top_n=kwargs["top_n"],
             local_only=local_only,
         )
         p.update(task, description="[green]✓[/green] Analysis complete")
