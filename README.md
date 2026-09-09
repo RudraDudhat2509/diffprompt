@@ -68,16 +68,16 @@ Requires Python 3.10+. Works fully offline with Ollama. No OpenAI key needed.
 ## Quickstart
 
 ```bash
-# Option A — use Groq (free at console.groq.com)
+# Option A - use Groq (free at console.groq.com)
 export GROQ_API_KEY=your_key_here
 
 diffprompt diff v1.txt v2.txt --auto-generate
 
-# Option B — run fully offline with Ollama
+# Option B - run fully offline with Ollama
 ollama pull qwen2.5:7b
 diffprompt diff v1.txt v2.txt --auto-generate --local-only
 
-# Option C — bring your own test inputs
+# Option C - bring your own test inputs
 diffprompt diff v1.txt v2.txt --test-file inputs.jsonl
 ```
 
@@ -87,7 +87,7 @@ diffprompt diff v1.txt v2.txt --test-file inputs.jsonl
 
 ### 1. Ontology inference
 
-diffprompt reads your prompt and infers what input dimensions matter for testing it — tone, complexity, intent, emotional state, whatever's relevant. No hardcoded dimensions. Every prompt gets its own.
+diffprompt reads your prompt and infers what input dimensions matter for testing it - tone, complexity, intent, emotional state, whatever's relevant. No hardcoded dimensions. Every prompt gets its own.
 
 ### 2. Test generation
 
@@ -103,7 +103,7 @@ For every meaningfully different pair, a judge LLM evaluates direction: improvem
 
 ### 5. Behavioral slicing
 
-Results are grouped by dimension. Instead of one aggregate score, you get a score per behavioral slice — not "47/100 overall" but "works for factual, breaks for emotional."
+Results are grouped by dimension. Instead of one aggregate score, you get a score per behavioral slice - not "47/100 overall" but "works for factual, breaks for emotional."
 
 ### 6. Failure mode clustering
 
@@ -121,7 +121,7 @@ Different job. Different tool.
 
 ---
 
-## Model cascade — zero cost by default
+## Model cascade - zero cost by default
 
 | Layer | Task | Default | Cost |
 |-------|------|---------|------|
@@ -166,11 +166,11 @@ diffprompt diff <v1> <v2> [options]
 
 ## Output formats
 
-**Terminal** — color-coded, fits in one screen.
+**Terminal** - color-coded, fits in one screen.
 
-**JSON** — full structured report for downstream processing.
+**JSON** - full structured report for downstream processing.
 
-**HTML** — self-contained file, open in browser.
+**HTML** - self-contained file, open in browser.
 
 ```bash
 diffprompt diff v1.txt v2.txt --auto-generate --output html --save report.html
@@ -193,20 +193,20 @@ Exits with code 1 if regression score drops below threshold. Merge blocked.
 
 ---
 
-## diffprompt evolve — genetic prompt optimization
+## diffprompt evolve - genetic prompt optimization
 
-`diff` tells you what changed. `evolve` finds a better prompt for you, against tasks you define with a real answer — no LLM judge, ever.
+`diff` tells you what changed. `evolve` finds a better prompt for you, against tasks you define with a real answer - no LLM judge, ever.
 
 ```bash
 diffprompt evolve prompt.txt --golden-tasks tasks.yaml
 ```
 
-You give it a starting prompt and a set of **golden tasks** — inputs with a checkable right answer. `evolve` runs a genetic algorithm: it breeds variants of your prompt across generations, scores each one against your golden tasks, and keeps what wins.
+You give it a starting prompt and a set of **golden tasks** - inputs with a checkable right answer. `evolve` runs a genetic algorithm: it breeds variants of your prompt across generations, scores each one against your golden tasks, and keeps what wins.
 
 Scoring is 100% deterministic. No LLM ever judges or scores an output. Every task's score comes from:
 
-- **Checks** — regex match, keyword presence, JSON schema validity, or a numeric comparison. Each returns pass (1.0) or fail (0.0).
-- **Embedding similarity** — cosine similarity (local `all-MiniLM-L6-v2`, same model `diff` uses) against a golden answer you supply. This is a distance measurement, not a generative model — it can't be a judge.
+- **Checks** - regex match, keyword presence, JSON schema validity, or a numeric comparison. Each returns pass (1.0) or fail (0.0).
+- **Embedding similarity** - cosine similarity (local `all-MiniLM-L6-v2`, same model `diff` uses) against a golden answer you supply. This is a distance measurement, not a generative model - it can't be a judge.
 
 A task can use either, or both blended by weight.
 
@@ -232,15 +232,15 @@ tasks:
         extract_pattern: '"age"\s*:\s*(-?\d+)'
 ```
 
-`.jsonl` works too — one task object per line, same fields.
+`.jsonl` works too - one task object per line, same fields.
 
 ### How it evolves
 
-1. **Population** — starts from your prompt plus N-1 variants built with fixed template transforms (reorder instructions, tighten a word limit, make a soft constraint explicit, add/remove a format instruction). No LLM writes these.
-2. **Fitness** — each variant runs against every golden task; checks + embedding similarity give it a 0-1 score.
-3. **Selection** — the top half survive each generation. The single best-ever prompt is always carried forward unchanged (elitism) — evolve can never end up worse than what it's already found.
-4. **Breeding** — new variants come from crossover (splicing two survivors' instructions) plus occasional mutation (one more template transform).
-5. **Stop** — after `--generations`, or earlier if the best score hasn't improved in `--patience` generations.
+1. **Population** - starts from your prompt plus N-1 variants built with fixed template transforms (reorder instructions, tighten a word limit, make a soft constraint explicit, add/remove a format instruction). No LLM writes these.
+2. **Fitness** - each variant runs against every golden task; checks + embedding similarity give it a 0-1 score.
+3. **Selection** - the top half survive each generation. The single best-ever prompt is always carried forward unchanged (elitism) - evolve can never end up worse than what it's already found.
+4. **Breeding** - new variants come from crossover (splicing two survivors' instructions) plus occasional mutation (one more template transform).
+5. **Stop** - after `--generations`, or earlier if the best score hasn't improved in `--patience` generations.
 
 ```bash
 diffprompt evolve prompt.txt --golden-tasks tasks.yaml \
@@ -280,7 +280,7 @@ Prompts have behavior, not just text.
 
 When you change a prompt, you're not editing a document. You're changing how a system responds to thousands of possible inputs. Most of those inputs you've never seen. Some of them are edge cases you didn't think to test.
 
-diffprompt makes the invisible visible. It tells you which inputs your change helped, which it hurt, and why — before any of it reaches a user.
+diffprompt makes the invisible visible. It tells you which inputs your change helped, which it hurt, and why - before any of it reaches a user.
 
 ---
 

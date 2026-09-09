@@ -22,10 +22,10 @@ class TestCategory(str, Enum):
 
 The four taxonomy buckets used for test generation.
 
-- `TYPICAL` — realistic everyday inputs representing actual usage
-- `BOUNDARY` — inputs at the edge of what the prompt handles; too long, too short, tangentially related
-- `ADVERSARIAL` — inputs designed to expose failures; ambiguous, contradictory, trick questions
-- `FORMAT` — unusual formatting; ALL CAPS, no punctuation, emojis, very short inputs
+- `TYPICAL` - realistic everyday inputs representing actual usage
+- `BOUNDARY` - inputs at the edge of what the prompt handles; too long, too short, tangentially related
+- `ADVERSARIAL` - inputs designed to expose failures; ambiguous, contradictory, trick questions
+- `FORMAT` - unusual formatting; ALL CAPS, no punctuation, emojis, very short inputs
 
 ---
 
@@ -54,10 +54,10 @@ class TestCase(BaseModel):
 
 A single test input. Created by `generate_test_cases()`, tagged by `Ontology.tag()`.
 
-- `id` — short unique identifier (8 characters)
-- `input` — the raw input string sent to the LLM
-- `category` — which taxonomy bucket this came from
-- `tags` — dimension-to-value mapping; e.g. `{"tone": "emotional", "complexity": "simple"}`
+- `id` - short unique identifier (8 characters)
+- `input` - the raw input string sent to the LLM
+- `category` - which taxonomy bucket this came from
+- `tags` - dimension-to-value mapping; e.g. `{"tone": "emotional", "complexity": "simple"}`
 
 ---
 
@@ -74,10 +74,10 @@ class RunResult(BaseModel):
 
 The output from running one test case through one prompt version.
 
-- `test_id` — matches `TestCase.id`; used for joining v1 and v2 results
-- `prompt_version` — `"v1"` or `"v2"`
-- `model_used` — the model that produced this output; e.g. `"groq/llama-3.3-70b-versatile"`
-- `latency_ms` — time in milliseconds for the LLM call
+- `test_id` - matches `TestCase.id`; used for joining v1 and v2 results
+- `prompt_version` - `"v1"` or `"v2"`
+- `model_used` - the model that produced this output; e.g. `"groq/llama-3.3-70b-versatile"`
+- `latency_ms` - time in milliseconds for the LLM call
 
 ---
 
@@ -100,14 +100,14 @@ class DiffResult(BaseModel):
 
 The core analysis unit. One per test case. Assembled in `cli.py` from embedder and judge outputs.
 
-- `similarity` — cosine similarity between v1 and v2 outputs; 0.0 to 1.0
-- `divergence` — `1 - similarity`; how much the outputs differ
-- `verdict` — improvement, regression, or neutral
-- `reason` — one-sentence explanation from the judge LLM
-- `judge_confidence` — how certain the judge was; 0.0 to 1.0
-- `importance_score` — computed by `scorer.importance_score()`; used for ranking key examples
-- `cluster_label` — assigned by `cluster_diffs()`; -1 means unclustered noise
-- `cluster_centrality` — how central this diff is within its cluster; populated by clusterer
+- `similarity` - cosine similarity between v1 and v2 outputs; 0.0 to 1.0
+- `divergence` - `1 - similarity`; how much the outputs differ
+- `verdict` - improvement, regression, or neutral
+- `reason` - one-sentence explanation from the judge LLM
+- `judge_confidence` - how certain the judge was; 0.0 to 1.0
+- `importance_score` - computed by `scorer.importance_score()`; used for ranking key examples
+- `cluster_label` - assigned by `cluster_diffs()`; -1 means unclustered noise
+- `cluster_centrality` - how central this diff is within its cluster; populated by clusterer
 
 ---
 
@@ -129,15 +129,15 @@ class SliceResult(BaseModel):
 
 Performance summary for one behavioral slice.
 
-- `dimension` — the tag dimension; e.g. `"tone"`
-- `value` — the tag value; e.g. `"emotional"`
-- `label` — `"{dimension}:{value}"`; e.g. `"tone:emotional"`
-- `n` — number of test cases in this slice
-- `mean_similarity` — average similarity across all diffs in this slice
-- `variance` — variance of similarity scores; high variance means inconsistent behavior
-- `typical_ratio` — fraction of diffs from `TYPICAL` bucket; affects confidence
-- `confidence` — reliability of this slice's verdict; computed from variance, typical_ratio, and n
-- `depth` — 1 for top-level slices; 2 or 3 for recursively split sub-slices
+- `dimension` - the tag dimension; e.g. `"tone"`
+- `value` - the tag value; e.g. `"emotional"`
+- `label` - `"{dimension}:{value}"`; e.g. `"tone:emotional"`
+- `n` - number of test cases in this slice
+- `mean_similarity` - average similarity across all diffs in this slice
+- `variance` - variance of similarity scores; high variance means inconsistent behavior
+- `typical_ratio` - fraction of diffs from `TYPICAL` bucket; affects confidence
+- `confidence` - reliability of this slice's verdict; computed from variance, typical_ratio, and n
+- `depth` - 1 for top-level slices; 2 or 3 for recursively split sub-slices
 
 ---
 
@@ -155,10 +155,10 @@ class Cluster(BaseModel):
 
 A named failure mode; a group of diffs with similar judge reasons.
 
-- `label` — HDBSCAN cluster label (integer)
-- `name` — auto-generated name; e.g. `"CONTEXT_LOSS"`, `"TONE_SHIFT"`, `"REFUSAL_SHIFT"`
-- `description` — first 120 characters of the combined reasons from the top 3 diffs
-- `test_ids` — list of `TestCase.id` values in this cluster
+- `label` - HDBSCAN cluster label (integer)
+- `name` - auto-generated name; e.g. `"CONTEXT_LOSS"`, `"TONE_SHIFT"`, `"REFUSAL_SHIFT"`
+- `description` - first 120 characters of the combined reasons from the top 3 diffs
+- `test_ids` - list of `TestCase.id` values in this cluster
 
 ---
 
@@ -173,9 +173,9 @@ class KeyExample(BaseModel):
 
 One of the three highlighted examples in the output.
 
-- `slot` — `"most_important"`, `"best_improvement"`, or `"most_surprising"`
-- `diff` — the full `DiffResult` for this example
-- `why_it_matters` — one-sentence explanation generated by the scorer LLM
+- `slot` - `"most_important"`, `"best_improvement"`, or `"most_surprising"`
+- `diff` - the full `DiffResult` for this example
+- `why_it_matters` - one-sentence explanation generated by the scorer LLM
 
 ---
 
@@ -204,9 +204,9 @@ class DiffReport(BaseModel):
 
 The final report. Contains everything produced by the pipeline. Passed to the output layer for rendering.
 
-- `diversity_score` — how diverse the test suite is; 0.0 to 1.0. Below 0.4 triggers a warning.
-- `regression_score` — overall score 0 to 100. 100 means v2 improves everywhere. 0 means v2 regresses everywhere.
-- `recommendation` — plain English summary of what to do
+- `diversity_score` - how diverse the test suite is; 0.0 to 1.0. Below 0.4 triggers a warning.
+- `regression_score` - overall score 0 to 100. 100 means v2 improves everywhere. 0 means v2 regresses everywhere.
+- `recommendation` - plain English summary of what to do
 
 ---
 
@@ -234,8 +234,8 @@ async def infer(self, prompt: str, local_only: bool = False) -> None
 
 Calls the LLM once to infer relevant dimensions for this prompt. Populates `self.dimensions`.
 
-- `prompt` — the prompt to analyze
-- `local_only` — if True, never call external APIs
+- `prompt` - the prompt to analyze
+- `local_only` - if True, never call external APIs
 
 ---
 
@@ -291,8 +291,8 @@ async def generate_test_cases(
 
 Generates `n` test cases distributed across the four taxonomy buckets (45% typical, 35% adversarial, 10% boundary, 10% format). Each test case is tagged using the ontology if provided.
 
-- `n` — total number of test cases to generate. Actual count may differ slightly due to rounding.
-- `ontology` — if provided, tags each generated input. If None, tags are empty.
+- `n` - total number of test cases to generate. Actual count may differ slightly due to rounding.
+- `ontology` - if provided, tags each generated input. If None, tags are empty.
 
 ---
 
@@ -373,9 +373,9 @@ async def run_single(
 
 Runs one test case through one prompt version. Returns a `RunResult` with the output and latency.
 
-- `prompt` — used as the system message
-- `test_case.input` — used as the user message
-- `version` — label for the result; `"v1"` or `"v2"`
+- `prompt` - used as the system message
+- `test_case.input` - used as the user message
+- `version` - label for the result; `"v1"` or `"v2"`
 
 ---
 
@@ -394,7 +394,7 @@ async def run_both(
 
 Runs all test cases through both prompts concurrently. Returns two dicts keyed by `test_id`.
 
-- `concurrency` — max concurrent LLM calls. Increase for faster runs, decrease to avoid rate limits.
+- `concurrency` - max concurrent LLM calls. Increase for faster runs, decrease to avoid rate limits.
 
 ```python
 v1_results, v2_results = await run_both(test_cases, prompt_v1, prompt_v2)
@@ -514,9 +514,9 @@ async def call_cascade(
 
 The main LLM entry point. Tries Ollama first, falls back to Groq. Returns `(output, model_used)`.
 
-- `prompt` — the user message
-- `system` — optional system message
-- `local_only` — if True, raises `RuntimeError` when Ollama is unavailable instead of falling back to Groq
+- `prompt` - the user message
+- `system` - optional system message
+- `local_only` - if True, raises `RuntimeError` when Ollama is unavailable instead of falling back to Groq
 
 Raises `RuntimeError` if all models fail.
 
@@ -552,7 +552,7 @@ Calls the Groq API. Returns `None` if `GROQ_API_KEY` is not set or the call fail
 
 ## evolve
 
-`diffprompt evolve` never uses an LLM to judge or score outputs. Fitness comes only from deterministic checks and embedding similarity — see [`diffprompt.core.fitness`](#diffpromptcorefitness) below. The only LLM call in this path is generation (running a prompt variant to get its output), same as `diff`'s runner.
+`diffprompt evolve` never uses an LLM to judge or score outputs. Fitness comes only from deterministic checks and embedding similarity - see [`diffprompt.core.fitness`](#diffpromptcorefitness) below. The only LLM call in this path is generation (running a prompt variant to get its output), same as `diff`'s runner.
 
 ### CheckType
 
@@ -578,7 +578,7 @@ class Check(BaseModel):
     expected: float | None      # numeric
     tolerance: float            # numeric, default 0.0
     comparator: Literal["eq", "gte", "lte"]  # numeric, default "eq"
-    extract_pattern: str | None # numeric — regex w/ one capture group to pull the number from the output
+    extract_pattern: str | None # numeric - regex w/ one capture group to pull the number from the output
 ```
 
 One deterministic, pass/fail (0.0 or 1.0) check against a prompt's output. `weight` is how much this check counts within its task's score.
@@ -589,13 +589,13 @@ One deterministic, pass/fail (0.0 or 1.0) check against a prompt's output. `weig
 class GoldenTask(BaseModel):
     id: str                        # auto-generated 8-char id if omitted
     input: str
-    weight: float                  # default 1.0 — this task's weight in the aggregate fitness
+    weight: float                  # default 1.0 - this task's weight in the aggregate fitness
     golden_answer: str | None      # compared via embedding similarity
-    golden_answer_weight: float    # default 1.0 — weight of the embedding term within this task
+    golden_answer_weight: float    # default 1.0 - weight of the embedding term within this task
     checks: list[Check]
 ```
 
-Must have at least one check or a `golden_answer` — otherwise there's nothing to score it on (raises `ValueError`).
+Must have at least one check or a `golden_answer` - otherwise there's nothing to score it on (raises `ValueError`).
 
 ### EvolveReport
 
@@ -673,7 +673,7 @@ async def fitness(
 ) -> float
 ```
 
-Runs `prompt` against every task's `input` (via `runner.run_prompt_on_tasks`), scores each output with `score_task`, and returns the task-weighted average — the number the genetic algorithm selects on. Returns 0.0 for an empty task list.
+Runs `prompt` against every task's `input` (via `runner.run_prompt_on_tasks`), scores each output with `score_task`, and returns the task-weighted average - the number the genetic algorithm selects on. Returns 0.0 for an empty task list.
 
 ---
 
