@@ -249,5 +249,134 @@ def _save_report(report, path: str, fmt: str) -> None:
             f.write("\n".join(lines))
 
 
+@app.command()
+@click.argument("prompt_file")
+@click.option("--golden-tasks", required=True, help="Path to golden tasks .yaml/.yml or .jsonl file")
+@click.option("--generations", default=20, show_default=True, help="Max generations")
+@click.option("--population", default=5, show_default=True, help="Population size")
+@click.option("--patience", default=5, show_default=True, help="Early-stop if no improvement for N generations")
+@click.option("--model", default="groq/llama-3.3-70b-versatile", show_default=True)
+@click.option("--local-only", is_flag=True, default=False, help="Never call any external API")
+@click.option("--output", "output_format", default="terminal",
+              type=click.Choice(["terminal", "json", "html"]), show_default=True)
+@click.option("--save", default=None, help="Save report to this file path")
+def evolve(prompt_file, golden_tasks, generations, population, patience, model, local_only, output_format, save):
+    """Evolve a prompt against golden tasks with a deterministic genetic algorithm.
+
+    \b
+    PROMPT_FILE can be a file path or inline string.
+
+    \b
+    Fitness is never LLM-judged. It comes only from deterministic checks
+    (regex, keyword, json_schema, numeric) and embedding similarity against
+    a golden answer, defined per task in --golden-tasks.
+
+    \b
+    Examples:
+      diffprompt evolve prompt.txt --golden-tasks tasks.yaml
+      diffprompt evolve prompt.txt --golden-tasks tasks.yaml --generations 30 --population 8
+      diffprompt evolve prompt.txt --golden-tasks tasks.jsonl --output html --save report.html
+    """
+    asyncio.run(_run_evolve(
+        prompt=_load_prompt(prompt_file), golden_tasks_path=golden_tasks,
+        generations=generations, population=population, patience=patience,
+        model=model, local_only=local_only, output_format=output_format, save=save,
+    ))
+
+
+async def _run_evolve(**kwargs):
+    import random
+    from diffprompt.core.golden_tasks   import load_golden_tasks
+    from diffprompt.core.fitness        import fitness
+    from diffprompt.core.population     import init_population, select, breed_next_generation
+    from diffprompt.models              import EvolveReport, GenerationRecord
+    from diffprompt.output.evolve_terminal import render as render_evolve
+
+    original_prompt   = kwargs["prompt"]
+    golden_tasks_path = kwargs["golden_tasks_path"]
+    population_size   = kwargs["population"]
+    max_generations   = kwargs["generations"]
+    patience          = kwargs["patience"]
+    model             = kwargs["model"]
+    local_only        = kwargs["local_only"]
+
+    tasks = load_golden_tasks(golden_tasks_path)
+    rng = random.Random()
+
+    async def score(prompt: str) -> float:
+        return await fitness(prompt, tasks, model=model, local_only=local_only)
+
+    generations: list = []
+    best_prompt = original_prompt
+    best_fitness = -1.0
+    gens_since_improvement = 0
+    stopped_reason = "max_generations"
+
+    with Progress(SpinnerColumn(), TextColumn("[progress.description]{task.description}"), transient=True) as p:
+        task = p.add_task("Initializing population...", total=None)
+        population_prompts = init_population(original_prompt, population_size, rng)
+
+        for gen in range(max_generations):
+            p.update(task, description=f"Generation {gen + 1}/{max_generations}: scoring {len(population_prompts)} variants...")
+            scores = await asyncio.gather(*(score(variant) for variant in population_prompts))
+            scored = list(zip(population_prompts, scores))
+
+            gen_best_prompt, gen_best_fitness = max(scored, key=lambda pair: pair[1])
+            mean_fitness = sum(s for _, s in scored) / len(scored)
+
+            improved = gen_best_fitness > best_fitness + 1e-4
+            if gen_best_fitness > best_fitness:
+                best_fitness, best_prompt = gen_best_fitness, gen_best_prompt
+
+            generations.append(GenerationRecord(
+                generation=gen, best_fitness=best_fitness, mean_fitness=mean_fitness, best_prompt=best_prompt,
+            ))
+            gens_since_improvement = 0 if improved else gens_since_improvement + 1
+
+            p.update(task, description=f"[green]✓[/green] Gen {gen + 1}: best={best_fitness:.2f} mean={mean_fitness:.2f}")
+
+            if gens_since_improvement >= patience:
+                stopped_reason = "patience"
+                break
+
+            survivors = select(scored, max(2, population_size // 2))
+            population_prompts = breed_next_generation(survivors, best_prompt, population_size, rng)
+
+        p.update(task, description="[green]✓[/green] Evolution complete")
+
+    report = EvolveReport(
+        original_prompt=original_prompt, final_prompt=best_prompt, final_fitness=best_fitness,
+        model=model, population_size=population_size, n_generations_run=len(generations),
+        stopped_reason=stopped_reason, generations=generations,
+        golden_tasks_path=golden_tasks_path, n_tasks=len(tasks),
+    )
+
+    render_evolve(report)
+
+    if kwargs["save"]:
+        _save_evolve_report(report, kwargs["save"], kwargs["output_format"])
+        console.print(f"[dim]Saved → {kwargs['save']}[/dim]")
+
+
+def _save_evolve_report(report, path: str, fmt: str) -> None:
+    if fmt == "json" or path.endswith(".json"):
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(report.model_dump_json(indent=2))
+    elif fmt == "html" or path.endswith(".html"):
+        from diffprompt.output.evolve_exporter import render_html
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(render_html(report))
+    else:
+        lines = [
+            "diffprompt evolve report", "=" * 40,
+            f"original: {report.original_prompt[:80]}",
+            f"final fitness: {report.final_fitness:.2f}",
+            f"generations run: {report.n_generations_run} ({report.stopped_reason})",
+            "", "evolved prompt:", report.final_prompt,
+        ]
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+
+
 if __name__ == "__main__":
     app()
