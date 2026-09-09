@@ -1,10 +1,10 @@
 """
 Fitness scoring for `diffprompt evolve`.
 
-Deterministic only — regex/keyword/json_schema/numeric checks, plus embedding
+Deterministic only - regex/keyword/json_schema/numeric checks, plus embedding
 similarity (local all-MiniLM-L6-v2, no generative model) against a golden
 answer. `run_prompt_on_tasks` calls an LLM to produce the output text being
-scored — that's generation, not judging, and is the only LLM call in this path.
+scored - that's generation, not judging, and is the only LLM call in this path.
 """
 from __future__ import annotations
 

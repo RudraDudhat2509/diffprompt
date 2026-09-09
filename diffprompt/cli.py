@@ -1,5 +1,5 @@
 """
-diffprompt CLI — uses Click directly (no Typer) for cross-version compatibility.
+diffprompt CLI - uses Click directly (no Typer) for cross-version compatibility.
 """
 from __future__ import annotations
 import asyncio

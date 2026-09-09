@@ -93,7 +93,7 @@ async def run_prompt_on_tasks(
 ) -> dict[str, str]:
     """
     Run one prompt variant against a list of golden tasks (used by `evolve`).
-    Returns {task_id: output}. Generation only — never used to judge or score;
+    Returns {task_id: output}. Generation only - never used to judge or score;
     the caller runs deterministic checks / embedding similarity on the result.
     """
     semaphore = asyncio.Semaphore(concurrency)

@@ -1,6 +1,6 @@
 """
 Deterministic check evaluation for golden tasks.
-Every check returns 0.0 or 1.0 — pure functions, no LLM, no network.
+Every check returns 0.0 or 1.0 - pure functions, no LLM, no network.
 """
 from __future__ import annotations
 import json

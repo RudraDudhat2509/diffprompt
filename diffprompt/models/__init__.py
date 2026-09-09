@@ -1,6 +1,6 @@
 """
 Core data models for diffprompt.
-These types flow through the entire pipeline — generator → runner → diff → analysis → output.
+These types flow through the entire pipeline - generator → runner → diff → analysis → output.
 """
 from __future__ import annotations
 import uuid
@@ -167,7 +167,7 @@ class GoldenTask(BaseModel):
     def _require_scoring_signal(self) -> "GoldenTask":
         if not self.checks and not self.golden_answer:
             raise ValueError(
-                f"task {self.id!r} has no checks and no golden_answer — nothing to score it on"
+                f"task {self.id!r} has no checks and no golden_answer - nothing to score it on"
             )
         return self
 
