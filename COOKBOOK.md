@@ -288,3 +288,37 @@ diffprompt diff v1.txt v2.txt --auto-generate --n 40
 # High confidence
 diffprompt diff v1.txt v2.txt --auto-generate --n 80
 ```
+
+---
+
+## 11. Evolving a weak prompt against golden tasks
+
+You have a rough first-draft prompt and a handful of inputs where you already know the right answer. Instead of hand-tweaking, let `evolve` search for a better version.
+
+**prompt.txt**
+```
+You are a support assistant. Help the user.
+```
+
+**tasks.yaml**
+```yaml
+tasks:
+  - input: "What's your refund policy?"
+    golden_answer: "Refunds are available within 30 days of purchase with a receipt."
+    checks:
+      - type: keyword
+        keywords: ["30 days"]
+        weight: 2.0
+  - input: "Give me my account status as JSON."
+    checks:
+      - type: json_schema
+        schema: {type: object, required: [status]}
+```
+
+```bash
+diffprompt evolve prompt.txt --golden-tasks tasks.yaml --generations 25 --population 6
+```
+
+Watch the `SCORE BY GENERATION` sparkline. If it flatlines early, your golden tasks probably can't be satisfied by any prompt-level change alone (e.g. the model genuinely doesn't know the refund window) — that's a signal to fix the golden task or add the fact to the prompt yourself, not something more generations will fix.
+
+If you want a faster loop while iterating on your golden tasks, add `--local-only` and run Ollama.

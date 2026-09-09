@@ -193,6 +193,87 @@ Exits with code 1 if regression score drops below threshold. Merge blocked.
 
 ---
 
+## diffprompt evolve — genetic prompt optimization
+
+`diff` tells you what changed. `evolve` finds a better prompt for you, against tasks you define with a real answer — no LLM judge, ever.
+
+```bash
+diffprompt evolve prompt.txt --golden-tasks tasks.yaml
+```
+
+You give it a starting prompt and a set of **golden tasks** — inputs with a checkable right answer. `evolve` runs a genetic algorithm: it breeds variants of your prompt across generations, scores each one against your golden tasks, and keeps what wins.
+
+Scoring is 100% deterministic. No LLM ever judges or scores an output. Every task's score comes from:
+
+- **Checks** — regex match, keyword presence, JSON schema validity, or a numeric comparison. Each returns pass (1.0) or fail (0.0).
+- **Embedding similarity** — cosine similarity (local `all-MiniLM-L6-v2`, same model `diff` uses) against a golden answer you supply. This is a distance measurement, not a generative model — it can't be a judge.
+
+A task can use either, or both blended by weight.
+
+### Golden tasks
+
+```yaml
+# tasks.yaml
+tasks:
+  - input: "What is the capital of France?"
+    golden_answer: "The capital of France is Paris."
+    checks:
+      - type: keyword
+        keywords: ["Paris"]
+        weight: 2.0
+  - input: "Return the user's age as JSON."
+    weight: 1.5
+    checks:
+      - type: json_schema
+        schema: {type: object, required: [age], properties: {age: {type: integer}}}
+      - type: numeric
+        expected: 0
+        comparator: gte
+        extract_pattern: '"age"\s*:\s*(-?\d+)'
+```
+
+`.jsonl` works too — one task object per line, same fields.
+
+### How it evolves
+
+1. **Population** — starts from your prompt plus N-1 variants built with fixed template transforms (reorder instructions, tighten a word limit, make a soft constraint explicit, add/remove a format instruction). No LLM writes these.
+2. **Fitness** — each variant runs against every golden task; checks + embedding similarity give it a 0-1 score.
+3. **Selection** — the top half survive each generation. The single best-ever prompt is always carried forward unchanged (elitism) — evolve can never end up worse than what it's already found.
+4. **Breeding** — new variants come from crossover (splicing two survivors' instructions) plus occasional mutation (one more template transform).
+5. **Stop** — after `--generations`, or earlier if the best score hasn't improved in `--patience` generations.
+
+```bash
+diffprompt evolve prompt.txt --golden-tasks tasks.yaml \
+  --generations 30 --population 8 --patience 5
+```
+
+Output shows the score climbing generation over generation, the winning prompt, and a plain text diff against where you started:
+
+```
+0.42  fitness        ██████████░░░░░░░░░░░░░░
+12 generations · stopped early (--patience)
+
+SCORE BY GENERATION
+  ▂▃▃▅▆▆▇███  0.31 → 0.87
+
+EVOLVED PROMPT
+  You are a helpful assistant.
+  Keep responses to 3 sentences or fewer.
+  Respond in valid JSON.
+
+WHAT CHANGED
+  --- original
+  +++ evolved
+  @@ -1 +1,3 @@
+   You are a helpful assistant.
+  +Keep responses to 3 sentences or fewer.
+  +Respond in valid JSON.
+```
+
+`--output json` and `--save PATH` work the same way as `diff`.
+
+---
+
 ## Philosophy
 
 Prompts have behavior, not just text.

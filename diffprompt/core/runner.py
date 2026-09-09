@@ -5,7 +5,7 @@ Returns RunResult for each (test_case, prompt_version) pair.
 from __future__ import annotations
 import asyncio
 import time
-from diffprompt.models import TestCase, RunResult
+from diffprompt.models import TestCase, TestCategory, RunResult, GoldenTask
 from diffprompt.models.cascade import call_cascade
 
 
@@ -82,3 +82,27 @@ async def run_both(
     v1_results = {r.test_id: r for r in v1_raw}
     v2_results = {r.test_id: r for r in v2_raw}
     return v1_results, v2_results
+
+
+async def run_prompt_on_tasks(
+    tasks: list[GoldenTask],
+    prompt: str,
+    model: str = "groq/llama-3.3-70b-versatile",
+    local_only: bool = False,
+    concurrency: int = 5,
+) -> dict[str, str]:
+    """
+    Run one prompt variant against a list of golden tasks (used by `evolve`).
+    Returns {task_id: output}. Generation only — never used to judge or score;
+    the caller runs deterministic checks / embedding similarity on the result.
+    """
+    semaphore = asyncio.Semaphore(concurrency)
+
+    async def run_with_sem(task: GoldenTask) -> tuple[str, str]:
+        tc = TestCase(id=task.id, input=task.input, category=TestCategory.TYPICAL)
+        async with semaphore:
+            result = await run_single(tc, prompt, "evolve", model, local_only)
+        return task.id, result.output
+
+    pairs = await asyncio.gather(*(run_with_sem(t) for t in tasks))
+    return dict(pairs)

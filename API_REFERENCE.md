@@ -547,3 +547,190 @@ async def call_groq(
 ```
 
 Calls the Groq API. Returns `None` if `GROQ_API_KEY` is not set or the call fails. Reads the key from `os.getenv("GROQ_API_KEY")`.
+
+---
+
+## evolve
+
+`diffprompt evolve` never uses an LLM to judge or score outputs. Fitness comes only from deterministic checks and embedding similarity — see [`diffprompt.core.fitness`](#diffpromptcorefitness) below. The only LLM call in this path is generation (running a prompt variant to get its output), same as `diff`'s runner.
+
+### CheckType
+
+```python
+class CheckType(str, Enum):
+    REGEX       = "regex"
+    JSON_SCHEMA = "json_schema"
+    KEYWORD     = "keyword"
+    NUMERIC     = "numeric"
+```
+
+### Check
+
+```python
+class Check(BaseModel):
+    type: CheckType
+    weight: float               # default 1.0
+    pattern: str | None         # regex
+    ignore_case: bool           # regex, default False
+    schema_: dict | None        # json_schema (yaml/json key: "schema")
+    keywords: list[str] | None  # keyword
+    match_any: bool             # keyword, default False (False = ALL must be present)
+    expected: float | None      # numeric
+    tolerance: float            # numeric, default 0.0
+    comparator: Literal["eq", "gte", "lte"]  # numeric, default "eq"
+    extract_pattern: str | None # numeric — regex w/ one capture group to pull the number from the output
+```
+
+One deterministic, pass/fail (0.0 or 1.0) check against a prompt's output. `weight` is how much this check counts within its task's score.
+
+### GoldenTask
+
+```python
+class GoldenTask(BaseModel):
+    id: str                        # auto-generated 8-char id if omitted
+    input: str
+    weight: float                  # default 1.0 — this task's weight in the aggregate fitness
+    golden_answer: str | None      # compared via embedding similarity
+    golden_answer_weight: float    # default 1.0 — weight of the embedding term within this task
+    checks: list[Check]
+```
+
+Must have at least one check or a `golden_answer` — otherwise there's nothing to score it on (raises `ValueError`).
+
+### EvolveReport
+
+```python
+class EvolveReport(BaseModel):
+    original_prompt: str
+    final_prompt: str
+    final_fitness: float
+    model: str
+    population_size: int
+    n_generations_run: int
+    stopped_reason: Literal["max_generations", "patience"]
+    generations: list[GenerationRecord]
+    golden_tasks_path: str
+    n_tasks: int
+```
+
+The output of `evolve`, passed to `output.evolve_terminal.render()` / `output.evolve_exporter.render_html()`.
+
+### GenerationRecord
+
+```python
+class GenerationRecord(BaseModel):
+    generation: int
+    best_fitness: float   # best-of-all-time as of this generation (monotonic, via elitism)
+    mean_fitness: float   # this generation's population mean
+    best_prompt: str
+```
+
+---
+
+### diffprompt.core.checks
+
+#### score_check
+
+```python
+def score_check(check: Check, output: str) -> float
+```
+
+Evaluates one `Check` against one output string. Returns `0.0` or `1.0`. Pure, deterministic, no LLM.
+
+---
+
+### diffprompt.core.golden_tasks
+
+#### load_golden_tasks
+
+```python
+def load_golden_tasks(path: str) -> list[GoldenTask]
+```
+
+Loads golden tasks from `.yaml`/`.yml` (a `tasks:` list) or `.jsonl` (one task object per line). Raises `FileNotFoundError`, or `ValueError` if the format is unsupported or the file is empty.
+
+---
+
+### diffprompt.core.fitness
+
+#### score_task
+
+```python
+def score_task(task: GoldenTask, output: str) -> float
+```
+
+Weighted blend of the task's checks and (if present) its embedding similarity to `golden_answer`, normalized by total weight. Returns 0.0–1.0.
+
+#### fitness
+
+```python
+async def fitness(
+    prompt: str,
+    tasks: list[GoldenTask],
+    model: str = "groq/llama-3.3-70b-versatile",
+    local_only: bool = False,
+    concurrency: int = 5,
+) -> float
+```
+
+Runs `prompt` against every task's `input` (via `runner.run_prompt_on_tasks`), scores each output with `score_task`, and returns the task-weighted average — the number the genetic algorithm selects on. Returns 0.0 for an empty task list.
+
+---
+
+### diffprompt.core.mutate
+
+```python
+TRANSFORMS: dict[str, Callable[[list[str], random.Random], list[str]]]
+```
+
+The fixed, hardcoded template menu: `reorder`, `tighten_word_limit`, `explicit_constraint`, `add_format`, `remove_format`. Each operates on a prompt as a list of non-empty lines.
+
+#### mutate
+
+```python
+def mutate(prompt: str, rng: random.Random) -> str
+```
+
+Applies one randomly-chosen transform from `TRANSFORMS`.
+
+---
+
+### diffprompt.core.population
+
+#### init_population
+
+```python
+def init_population(base_prompt: str, n: int, rng: random.Random) -> list[str]
+```
+
+Variant 0 is always `base_prompt`, unmodified. Variants 1..n-1 each apply one distinct transform from `TRANSFORMS`, cycling through the menu if `n` exceeds its size.
+
+#### crossover
+
+```python
+def crossover(parent_a: str, parent_b: str, rng: random.Random) -> str
+```
+
+Single-point splice: head of `parent_a`'s instruction lines + tail of `parent_b`'s.
+
+#### select
+
+```python
+def select(scored: list[tuple[str, float]], k: int) -> list[tuple[str, float]]
+```
+
+Keeps the top-`k` `(prompt, fitness)` pairs by fitness, descending.
+
+#### breed_next_generation
+
+```python
+def breed_next_generation(
+    survivors: list[tuple[str, float]],
+    elite_prompt: str,
+    population_size: int,
+    rng: random.Random,
+    mutation_rate: float = 0.3,
+) -> list[str]
+```
+
+Slot 0 is always `elite_prompt`, unmodified (elitism). The rest are bred from `survivors` via `crossover`, then `mutate`d with probability `mutation_rate`.
