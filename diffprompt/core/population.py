@@ -12,7 +12,7 @@ _MUTATION_RATE = 0.3
 
 def init_population(base_prompt: str, n: int, rng: random.Random) -> list[str]:
     """
-    Variant 0 is always the literal, unmodified starting prompt — evolution
+    Variant 0 is always the literal, unmodified starting prompt - evolution
     can never end up worse than the baseline. The rest apply one distinct
     template transform each, cycling through the menu if n exceeds its size.
     """

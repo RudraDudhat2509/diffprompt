@@ -4,7 +4,7 @@ Rich terminal renderer for `diffprompt evolve`.
 Same inverted-pyramid instinct as output/terminal.py: score first, then the
 generation-by-generation trend, then the winning prompt, then exactly what
 changed. The diff at the bottom is a plain text/line diff (difflib) styled to
-match — no LLM involved anywhere in this render path.
+match - no LLM involved anywhere in this render path.
 """
 from __future__ import annotations
 import difflib

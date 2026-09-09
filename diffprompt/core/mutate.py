@@ -1,6 +1,6 @@
 """
 Fixed, hardcoded template transformations for `diffprompt evolve`.
-Plain string/list operations — no LLM involved anywhere in this module.
+Plain string/list operations - no LLM involved anywhere in this module.
 """
 from __future__ import annotations
 import random

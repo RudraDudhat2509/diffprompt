@@ -22,7 +22,7 @@ def load_golden_tasks(path: str) -> list[GoldenTask]:
         tasks = _load_jsonl(p)
     else:
         raise ValueError(
-            f"unsupported golden tasks format {suffix!r} — use .yaml, .yml, or .jsonl"
+            f"unsupported golden tasks format {suffix!r} - use .yaml, .yml, or .jsonl"
         )
 
     if not tasks:

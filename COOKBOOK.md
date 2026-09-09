@@ -319,6 +319,6 @@ tasks:
 diffprompt evolve prompt.txt --golden-tasks tasks.yaml --generations 25 --population 6
 ```
 
-Watch the `SCORE BY GENERATION` sparkline. If it flatlines early, your golden tasks probably can't be satisfied by any prompt-level change alone (e.g. the model genuinely doesn't know the refund window) — that's a signal to fix the golden task or add the fact to the prompt yourself, not something more generations will fix.
+Watch the `SCORE BY GENERATION` sparkline. If it flatlines early, your golden tasks probably can't be satisfied by any prompt-level change alone (e.g. the model genuinely doesn't know the refund window) - that's a signal to fix the golden task or add the fact to the prompt yourself, not something more generations will fix.
 
 If you want a faster loop while iterating on your golden tasks, add `--local-only` and run Ollama.

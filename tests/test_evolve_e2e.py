@@ -19,7 +19,7 @@ async def _fake_call_cascade(prompt, system=None, **kwargs):
     A weak starting prompt (1 line) never mentions the answer. Any variant
     that has picked up a second instruction line (via a template transform)
     does. This makes fitness a real, checkable function of what the GA does
-    to the prompt — without hitting an actual model.
+    to the prompt - without hitting an actual model.
     """
     n_lines = len((system or "").strip().split("\n"))
     if n_lines <= 1:
