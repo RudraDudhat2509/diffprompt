@@ -26,7 +26,7 @@ You give it two prompts. It generates test cases, runs both prompts on all of th
 ```
 $ diffprompt diff v1.txt v2.txt --auto-generate --n 20
 
-diffprompt  v0.1.0  model: groq/llama-3.3-70b-versatile  judge: local/qwen2.5:7b  tests: 20
+diffprompt  v1.2.0  model: groq/llama-3.3-70b-versatile  judge: local/qwen2.5:7b  tests: 20
 ━━ SUMMARY
   18.2/100  ███░░░░░░░░░░░░░░░░░  4 improved  16 regressed  0 neutral
   mix:  9 typical  · 7 adversarial  · 2 boundary  · 2 format
@@ -271,6 +271,23 @@ WHAT CHANGED
 ```
 
 `--output json` and `--save PATH` work the same way as `diff`.
+
+---
+
+## Benchmarks
+
+Measured on 25 labeled prompt pairs for a support agent (10 seeded regressions, 10 harmless rewordings, 5 improvements), each run 3 times, using gpt-4o-mini as runner and judge with gpt-4o as the escalation model:
+
+| | Result |
+|---|---|
+| Harmless rewordings wrongly flagged as regression | 0 of 30 |
+| Seeded regressions flagged as regression | 15 of 30 (50%) |
+| Precision / recall / F1 | 1.00 / 0.50 / 0.67 |
+| Default `--ci` gate (score under 75 fails) | catches 23 of 30 regressions, fails 3 of 45 non-regressions |
+| Pairs whose verdict changed between identical reruns | 17 of 25 |
+| Judge calls escalated to the larger model | 4% |
+
+It has not seen a harmless change called a regression, but it misses about half of the real ones (a dropped safety rule, unconditional refund promises, JSON-only output, invented facts) and the verdict can flip between reruns. Use the score and the `--ci` threshold rather than the single verdict word. Small sample, one domain, one model family. Full method, caveats and commands: [BENCHMARKS.md](BENCHMARKS.md).
 
 ---
 
