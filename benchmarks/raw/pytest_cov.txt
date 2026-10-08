@@ -1,0 +1,43 @@
+........................................................................ [ 75%]
+.......................                                                  [100%]
+============================== warnings summary ===============================
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyPacked has no __module__ attribute
+
+<frozen importlib._bootstrap>:488
+  <frozen importlib._bootstrap>:488: DeprecationWarning: builtin type SwigPyObject has no __module__ attribute
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=============================== tests coverage ================================
+_______________ coverage: platform win32, python 3.12.7-final-0 _______________
+
+Name                                   Stmts   Miss  Cover
+----------------------------------------------------------
+diffprompt\__init__.py                     1      0   100%
+diffprompt\cli.py                        228    136    40%
+diffprompt\core\__init__.py                0      0   100%
+diffprompt\core\checks.py                 55      3    95%
+diffprompt\core\clusterer.py              79     79     0%
+diffprompt\core\embedder.py               39      0   100%
+diffprompt\core\fitness.py                22      1    95%
+diffprompt\core\generator.py              48      5    90%
+diffprompt\core\golden_tasks.py           31      1    97%
+diffprompt\core\judge.py                  44     28    36%
+diffprompt\core\mutate.py                 52      0   100%
+diffprompt\core\ontology.py              121     38    69%
+diffprompt\core\population.py             38      0   100%
+diffprompt\core\runner.py                 40     10    75%
+diffprompt\core\scorer.py                 48      2    96%
+diffprompt\core\slicer.py                 62     19    69%
+diffprompt\models\__init__.py            145      4    97%
+diffprompt\models\cascade.py              75     60    20%
+diffprompt\output\__init__.py              0      0   100%
+diffprompt\output\evolve_exporter.py      33     33     0%
+diffprompt\output\evolve_terminal.py      68      6    91%
+diffprompt\output\exporter.py             95     11    88%
+diffprompt\output\insights.py             89     10    89%
+diffprompt\output\terminal.py            115     13    89%
+diffprompt\ratelimit.py                   24      0   100%
+----------------------------------------------------------
+TOTAL                                   1552    459    70%
+95 passed, 2 warnings in 112.08s (0:01:52)

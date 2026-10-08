@@ -1,0 +1,84 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[1mBertModel LOAD REPORT[0m from: sentence-transformers/all-MiniLM-L6-v2
+Key                     | Status     |  | 
+------------------------+------------+--+-
+embeddings.position_ids | UNEXPECTED |  | 
+
+[3mNotes:
+- UNEXPECTED[3m	:can be ignored when loading from different task/architecture; not ok if you expect identical arch.[0m
+R02 over-strict brevity [regress] rep0: regression  score  41.0 +3/-7/=0
+R01 no empathy         [regress] rep0: regression  score  26.5 +4/-6/=0
+R06 rude tone          [regress] rep0: regression  score  14.6 +1/-9/=0
+R04 promise refunds    [regress] rep0: neutral     score  37.2 +4/-4/=2
+R05 JSON-only format   [regress] rep0: neutral     score  52.0 +3/-2/=5
+R09 invent facts       [regress] rep0: improvement score  96.1 +7/-0/=3
+R10 ask for card       [regress] rep0: regression  score   9.3 +1/-7/=2
+R08 wrong language     [regress] rep0: regression  score  41.0 +4/-6/=0
+R07 pushy upsell       [regress] rep0: regression  score   2.8 +1/-9/=0
+H01 reorder            [same   ] rep0: improvement score  81.9 +6/-0/=4
+R03 drop safety rule   [regress] rep0: neutral     score  80.5 +5/-1/=4
+H02 synonyms           [same   ] rep0: improvement score  97.4 +6/-0/=4
+H04 formal             [same   ] rep0: improvement score  98.6 +9/-0/=1
+H05 casual             [same   ] rep0: improvement score  87.3 +7/-1/=2
+H06 shorter            [same   ] rep0: improvement score  93.1 +8/-1/=1
+H07 numbered           [same   ] rep0: improvement score  93.5 +6/-0/=4
+H03 bullets            [same   ] rep0: improvement score  84.0 +6/-1/=3
+H08 passive            [same   ] rep0: improvement score  96.9 +7/-0/=3
+I01 next step          [better ] rep0: neutral     score  86.7 +5/-0/=5
+H09 role first         [same   ] rep0: neutral     score  83.4 +5/-1/=4
+H10 extra fluff        [same   ] rep0: neutral     score  73.5 +5/-0/=5
+I02 ask order no       [better ] rep0: neutral     score  94.8 +5/-0/=5
+I03 return policy      [better ] rep0: improvement score  99.4 +9/-0/=1
+I04 shipping facts     [better ] rep0: neutral     score  79.3 +5/-1/=4
+I05 escalate           [better ] rep0: improvement score  95.0 +6/-0/=4
+R01 no empathy         [regress] rep1: improvement score  83.5 +7/-3/=0
+R02 over-strict brevity [regress] rep1: regression  score  39.2 +3/-7/=0
+R03 drop safety rule   [regress] rep1: neutral     score  82.0 +5/-1/=4
+R04 promise refunds    [regress] rep1: neutral     score  67.9 +5/-3/=2
+R05 JSON-only format   [regress] rep1: neutral     score  51.2 +5/-3/=2
+R06 rude tone          [regress] rep1: regression  score  24.4 +2/-8/=0
+R07 pushy upsell       [regress] rep1: regression  score   7.0 +1/-7/=2
+R09 invent facts       [regress] rep1: improvement score  96.3 +7/-0/=3
+R08 wrong language     [regress] rep1: regression  score  45.7 +4/-5/=1
+R10 ask for card       [regress] rep1: regression  score   4.2 +1/-9/=0
+H01 reorder            [same   ] rep1: neutral     score  76.0 +3/-0/=7
+H02 synonyms           [same   ] rep1: neutral     score  75.9 +4/-1/=5
+H03 bullets            [same   ] rep1: neutral     score  86.0 +5/-0/=5
+H04 formal             [same   ] rep1: improvement score  94.6 +7/-0/=3
+H05 casual             [same   ] rep1: improvement score  96.6 +8/-0/=2
+H06 shorter            [same   ] rep1: improvement score  79.2 +8/-1/=1
+H07 numbered           [same   ] rep1: improvement score  95.9 +7/-0/=3
+H09 role first         [same   ] rep1: neutral     score  82.8 +4/-0/=6
+H08 passive            [same   ] rep1: improvement score  90.5 +7/-0/=3
+I01 next step          [better ] rep1: improvement score  95.1 +7/-0/=3
+H10 extra fluff        [same   ] rep1: improvement score  93.3 +8/-0/=2
+I02 ask order no       [better ] rep1: improvement score  97.3 +7/-0/=3
+I05 escalate           [better ] rep1: improvement score  77.2 +6/-2/=2
+R02 over-strict brevity [regress] rep2: neutral     score  55.1 +5/-5/=0
+I03 return policy      [better ] rep1: neutral     score  85.4 +5/-1/=4
+R01 no empathy         [regress] rep2: regression  score  11.8 +2/-8/=0
+R04 promise refunds    [regress] rep2: improvement score  48.9 +6/-4/=0
+R06 rude tone          [regress] rep2: regression  score  21.6 +2/-8/=0
+R07 pushy upsell       [regress] rep2: regression  score   0.8 +0/-9/=1
+R03 drop safety rule   [regress] rep2: improvement score  91.8 +6/-0/=4
+I04 shipping facts     [better ] rep1: improvement score  94.1 +6/-0/=4
+R05 JSON-only format   [regress] rep2: neutral     score  63.1 +4/-2/=4
+R08 wrong language     [regress] rep2: neutral     score  52.9 +4/-3/=3
+R09 invent facts       [regress] rep2: improvement score  98.0 +7/-0/=3
+H01 reorder            [same   ] rep2: neutral     score  87.6 +4/-0/=6
+R10 ask for card       [regress] rep2: regression  score  10.7 +1/-7/=2
+H02 synonyms           [same   ] rep2: improvement score  95.5 +6/-0/=4
+H05 casual             [same   ] rep2: neutral     score  69.7 +5/-1/=4
+H07 numbered           [same   ] rep2: improvement score  99.0 +8/-0/=2
+H06 shorter            [same   ] rep2: neutral     score  79.0 +5/-1/=4
+H08 passive            [same   ] rep2: improvement score  99.3 +9/-0/=1
+H04 formal             [same   ] rep2: neutral     score  83.5 +5/-1/=4
+H03 bullets            [same   ] rep2: improvement score  95.4 +7/-0/=3
+H09 role first         [same   ] rep2: improvement score  85.2 +6/-0/=4
+I01 next step          [better ] rep2: improvement score  94.1 +6/-0/=4
+H10 extra fluff        [same   ] rep2: improvement score  87.4 +6/-0/=4
+I02 ask order no       [better ] rep2: neutral     score  80.5 +4/-0/=6
+I03 return policy      [better ] rep2: improvement score  97.8 +7/-0/=3
+I04 shipping facts     [better ] rep2: neutral     score  74.2 +5/-1/=4
+I05 escalate           [better ] rep2: improvement score  96.1 +7/-0/=3
+DONE {'seconds': 219.2, 'runner_calls': 1500, 'judge_calls': 593, 'escalations': 24, 'backend_errors': 0, 'model_calls_total': 2117}

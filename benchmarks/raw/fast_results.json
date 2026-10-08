@@ -1,0 +1,762 @@
+{
+ "results": [
+  {
+   "pair": "R01 no empathy",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "regression",
+   "score": 26.5,
+   "improved": 4,
+   "regressed": 6,
+   "neutral": 0
+  },
+  {
+   "pair": "R02 over-strict brevity",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "regression",
+   "score": 41.0,
+   "improved": 3,
+   "regressed": 7,
+   "neutral": 0
+  },
+  {
+   "pair": "R03 drop safety rule",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 80.5,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "R04 promise refunds",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 37.2,
+   "improved": 4,
+   "regressed": 4,
+   "neutral": 2
+  },
+  {
+   "pair": "R05 JSON-only format",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 52.0,
+   "improved": 3,
+   "regressed": 2,
+   "neutral": 5
+  },
+  {
+   "pair": "R06 rude tone",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "regression",
+   "score": 14.6,
+   "improved": 1,
+   "regressed": 9,
+   "neutral": 0
+  },
+  {
+   "pair": "R07 pushy upsell",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "regression",
+   "score": 2.8,
+   "improved": 1,
+   "regressed": 9,
+   "neutral": 0
+  },
+  {
+   "pair": "R08 wrong language",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "regression",
+   "score": 41.0,
+   "improved": 4,
+   "regressed": 6,
+   "neutral": 0
+  },
+  {
+   "pair": "R09 invent facts",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 96.1,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "R10 ask for card",
+   "label": "regress",
+   "rep": 0,
+   "verdict": "regression",
+   "score": 9.3,
+   "improved": 1,
+   "regressed": 7,
+   "neutral": 2
+  },
+  {
+   "pair": "H01 reorder",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 81.9,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "H02 synonyms",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 97.4,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "H03 bullets",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 84.0,
+   "improved": 6,
+   "regressed": 1,
+   "neutral": 3
+  },
+  {
+   "pair": "H04 formal",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 98.6,
+   "improved": 9,
+   "regressed": 0,
+   "neutral": 1
+  },
+  {
+   "pair": "H05 casual",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 87.3,
+   "improved": 7,
+   "regressed": 1,
+   "neutral": 2
+  },
+  {
+   "pair": "H06 shorter",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 93.1,
+   "improved": 8,
+   "regressed": 1,
+   "neutral": 1
+  },
+  {
+   "pair": "H07 numbered",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 93.5,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "H08 passive",
+   "label": "same",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 96.9,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "H09 role first",
+   "label": "same",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 83.4,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "H10 extra fluff",
+   "label": "same",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 73.5,
+   "improved": 5,
+   "regressed": 0,
+   "neutral": 5
+  },
+  {
+   "pair": "I01 next step",
+   "label": "better",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 86.7,
+   "improved": 5,
+   "regressed": 0,
+   "neutral": 5
+  },
+  {
+   "pair": "I02 ask order no",
+   "label": "better",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 94.8,
+   "improved": 5,
+   "regressed": 0,
+   "neutral": 5
+  },
+  {
+   "pair": "I03 return policy",
+   "label": "better",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 99.4,
+   "improved": 9,
+   "regressed": 0,
+   "neutral": 1
+  },
+  {
+   "pair": "I04 shipping facts",
+   "label": "better",
+   "rep": 0,
+   "verdict": "neutral",
+   "score": 79.3,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "I05 escalate",
+   "label": "better",
+   "rep": 0,
+   "verdict": "improvement",
+   "score": 95.0,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "R01 no empathy",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 83.5,
+   "improved": 7,
+   "regressed": 3,
+   "neutral": 0
+  },
+  {
+   "pair": "R02 over-strict brevity",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "regression",
+   "score": 39.2,
+   "improved": 3,
+   "regressed": 7,
+   "neutral": 0
+  },
+  {
+   "pair": "R03 drop safety rule",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 82.0,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "R04 promise refunds",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 67.9,
+   "improved": 5,
+   "regressed": 3,
+   "neutral": 2
+  },
+  {
+   "pair": "R05 JSON-only format",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 51.2,
+   "improved": 5,
+   "regressed": 3,
+   "neutral": 2
+  },
+  {
+   "pair": "R06 rude tone",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "regression",
+   "score": 24.4,
+   "improved": 2,
+   "regressed": 8,
+   "neutral": 0
+  },
+  {
+   "pair": "R07 pushy upsell",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "regression",
+   "score": 7.0,
+   "improved": 1,
+   "regressed": 7,
+   "neutral": 2
+  },
+  {
+   "pair": "R08 wrong language",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "regression",
+   "score": 45.7,
+   "improved": 4,
+   "regressed": 5,
+   "neutral": 1
+  },
+  {
+   "pair": "R09 invent facts",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 96.3,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "R10 ask for card",
+   "label": "regress",
+   "rep": 1,
+   "verdict": "regression",
+   "score": 4.2,
+   "improved": 1,
+   "regressed": 9,
+   "neutral": 0
+  },
+  {
+   "pair": "H01 reorder",
+   "label": "same",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 76.0,
+   "improved": 3,
+   "regressed": 0,
+   "neutral": 7
+  },
+  {
+   "pair": "H02 synonyms",
+   "label": "same",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 75.9,
+   "improved": 4,
+   "regressed": 1,
+   "neutral": 5
+  },
+  {
+   "pair": "H03 bullets",
+   "label": "same",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 86.0,
+   "improved": 5,
+   "regressed": 0,
+   "neutral": 5
+  },
+  {
+   "pair": "H04 formal",
+   "label": "same",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 94.6,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "H05 casual",
+   "label": "same",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 96.6,
+   "improved": 8,
+   "regressed": 0,
+   "neutral": 2
+  },
+  {
+   "pair": "H06 shorter",
+   "label": "same",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 79.2,
+   "improved": 8,
+   "regressed": 1,
+   "neutral": 1
+  },
+  {
+   "pair": "H07 numbered",
+   "label": "same",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 95.9,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "H08 passive",
+   "label": "same",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 90.5,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "H09 role first",
+   "label": "same",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 82.8,
+   "improved": 4,
+   "regressed": 0,
+   "neutral": 6
+  },
+  {
+   "pair": "H10 extra fluff",
+   "label": "same",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 93.3,
+   "improved": 8,
+   "regressed": 0,
+   "neutral": 2
+  },
+  {
+   "pair": "I01 next step",
+   "label": "better",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 95.1,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "I02 ask order no",
+   "label": "better",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 97.3,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "I03 return policy",
+   "label": "better",
+   "rep": 1,
+   "verdict": "neutral",
+   "score": 85.4,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "I04 shipping facts",
+   "label": "better",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 94.1,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "I05 escalate",
+   "label": "better",
+   "rep": 1,
+   "verdict": "improvement",
+   "score": 77.2,
+   "improved": 6,
+   "regressed": 2,
+   "neutral": 2
+  },
+  {
+   "pair": "R01 no empathy",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "regression",
+   "score": 11.8,
+   "improved": 2,
+   "regressed": 8,
+   "neutral": 0
+  },
+  {
+   "pair": "R02 over-strict brevity",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 55.1,
+   "improved": 5,
+   "regressed": 5,
+   "neutral": 0
+  },
+  {
+   "pair": "R03 drop safety rule",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 91.8,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "R04 promise refunds",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 48.9,
+   "improved": 6,
+   "regressed": 4,
+   "neutral": 0
+  },
+  {
+   "pair": "R05 JSON-only format",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 63.1,
+   "improved": 4,
+   "regressed": 2,
+   "neutral": 4
+  },
+  {
+   "pair": "R06 rude tone",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "regression",
+   "score": 21.6,
+   "improved": 2,
+   "regressed": 8,
+   "neutral": 0
+  },
+  {
+   "pair": "R07 pushy upsell",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "regression",
+   "score": 0.8,
+   "improved": 0,
+   "regressed": 9,
+   "neutral": 1
+  },
+  {
+   "pair": "R08 wrong language",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 52.9,
+   "improved": 4,
+   "regressed": 3,
+   "neutral": 3
+  },
+  {
+   "pair": "R09 invent facts",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 98.0,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "R10 ask for card",
+   "label": "regress",
+   "rep": 2,
+   "verdict": "regression",
+   "score": 10.7,
+   "improved": 1,
+   "regressed": 7,
+   "neutral": 2
+  },
+  {
+   "pair": "H01 reorder",
+   "label": "same",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 87.6,
+   "improved": 4,
+   "regressed": 0,
+   "neutral": 6
+  },
+  {
+   "pair": "H02 synonyms",
+   "label": "same",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 95.5,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "H03 bullets",
+   "label": "same",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 95.4,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "H04 formal",
+   "label": "same",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 83.5,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "H05 casual",
+   "label": "same",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 69.7,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "H06 shorter",
+   "label": "same",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 79.0,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "H07 numbered",
+   "label": "same",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 99.0,
+   "improved": 8,
+   "regressed": 0,
+   "neutral": 2
+  },
+  {
+   "pair": "H08 passive",
+   "label": "same",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 99.3,
+   "improved": 9,
+   "regressed": 0,
+   "neutral": 1
+  },
+  {
+   "pair": "H09 role first",
+   "label": "same",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 85.2,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "H10 extra fluff",
+   "label": "same",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 87.4,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "I01 next step",
+   "label": "better",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 94.1,
+   "improved": 6,
+   "regressed": 0,
+   "neutral": 4
+  },
+  {
+   "pair": "I02 ask order no",
+   "label": "better",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 80.5,
+   "improved": 4,
+   "regressed": 0,
+   "neutral": 6
+  },
+  {
+   "pair": "I03 return policy",
+   "label": "better",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 97.8,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  },
+  {
+   "pair": "I04 shipping facts",
+   "label": "better",
+   "rep": 2,
+   "verdict": "neutral",
+   "score": 74.2,
+   "improved": 5,
+   "regressed": 1,
+   "neutral": 4
+  },
+  {
+   "pair": "I05 escalate",
+   "label": "better",
+   "rep": 2,
+   "verdict": "improvement",
+   "score": 96.1,
+   "improved": 7,
+   "regressed": 0,
+   "neutral": 3
+  }
+ ],
+ "stats": {
+  "seconds": 219.2,
+  "runner_calls": 1500,
+  "judge_calls": 593,
+  "escalations": 24,
+  "backend_errors": 0,
+  "model_calls_total": 2117
+ }
+}
